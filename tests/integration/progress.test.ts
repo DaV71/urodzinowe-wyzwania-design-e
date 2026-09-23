@@ -268,6 +268,43 @@ describe("progress", () => {
     expect(await countPending()).toBe(0);
   });
 
+  it("10b. undoLast po zaliczeniu 28 → 28 ACTIVE, bez następcy", async () => {
+    await ensureStarted();
+    await advanceTo(28);
+    await submit(28, { photos: [photo(28)] });
+    await approve(28);
+    expect(await undoLast()).toBe(28);
+    expect(await progressOf(28)).toMatchObject({ status: "ACTIVE", completedAt: null });
+    expect((await getBoard()).done).toBe(27);
+  });
+
+  it("9d. próby kodu: sukces zapisuje CodeAttempt success i audyt code_ok, porażka — code_bad", async () => {
+    await ensureStarted();
+    await completeWithCode(1, "AAAA-AAAA");
+    await completeWithCode(1, codeForTask(getEnv().CODES_SECRET, 1));
+    expect(await prisma.codeAttempt.count({ where: { taskId: 1, success: true } })).toBe(1);
+    expect(await prisma.codeAttempt.count({ where: { taskId: 1, success: false } })).toBe(1);
+    const actions = (await prisma.auditLog.findMany({ where: { taskId: 1 } })).map((a) => `${a.actor}:${a.action}`);
+    expect(actions).toEqual(expect.arrayContaining(["PLAYER:code_bad", "PLAYER:code_ok"]));
+  });
+
+  it("9e. kod przy PENDING_REVIEW przenosi wynik ze zgłoszenia", async () => {
+    await ensureStarted();
+    await advanceTo(6);
+    await submit(6, { photos: [photo(6)], durationS: 760, distanceM: 2100 });
+    expect(await completeWithCode(6, codeForTask(getEnv().CODES_SECRET, 6))).toEqual({ ok: true });
+    expect(await progressOf(6)).toMatchObject({ status: "DONE", source: "CODE", resultSeconds: 760, resultDistanceM: 2100 });
+  });
+
+  it("7b. approve po odrzuceniu (sprzeczna akcja admina) → invalid_transition, stan bez zmian", async () => {
+    await ensureStarted();
+    await submit(1, { photos: [photo(1)] });
+    await reject(1, "nie");
+    await expect(approve(1)).rejects.toMatchObject({ code: "invalid_transition" });
+    expect(await progressOf(1)).toMatchObject({ status: "ACTIVE", lastRejectReason: "nie" });
+    expect((await progressOf(2)).status).toBe("LOCKED");
+  });
+
   it("audyt: submit i approve zostawiają wpisy", async () => {
     await ensureStarted();
     await submit(1, { photos: [photo(1)] });

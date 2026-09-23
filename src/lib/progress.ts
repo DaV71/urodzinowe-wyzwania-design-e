@@ -64,8 +64,12 @@ async function startInTx(tx: Tx): Promise<boolean> {
   if (created.count === 0) return false;
   const started = await tx.taskProgress.count({ where: { status: { not: "LOCKED" } } });
   if (started === 0) {
-    await tx.taskProgress.update({ where: { taskId: 1 }, data: { status: "ACTIVE", unlockedAt: new Date() } });
-    await audit("SYSTEM", "start", null, undefined, tx);
+    // Warunkowo: przy dwóch równoległych startach tylko jeden odblokuje zadanie 1 i zapisze audyt.
+    const unlocked = await tx.taskProgress.updateMany({
+      where: { taskId: 1, status: "LOCKED" },
+      data: { status: "ACTIVE", unlockedAt: new Date() },
+    });
+    if (unlocked.count === 1) await audit("SYSTEM", "start", null, undefined, tx);
   }
   return true;
 }
@@ -122,19 +126,17 @@ export async function countPending(): Promise<number> {
 async function completeInTx(
   tx: Tx,
   taskId: number,
+  from: TaskStatus[],
   data: { source: Source; resultSeconds?: number | null; resultDistanceM?: number | null },
 ): Promise<void> {
   const now = new Date();
-  await tx.taskProgress.update({
-    where: { taskId },
-    data: {
-      status: "DONE",
-      completedAt: now,
-      source: data.source,
-      resultSeconds: data.resultSeconds ?? null,
-      resultDistanceM: data.resultDistanceM ?? null,
-      lastRejectReason: null,
-    },
+  await transition(tx, taskId, from, {
+    status: "DONE",
+    completedAt: now,
+    source: data.source,
+    resultSeconds: data.resultSeconds ?? null,
+    resultDistanceM: data.resultDistanceM ?? null,
+    lastRejectReason: null,
   });
   if (taskId + 1 <= TASK_COUNT) {
     await tx.taskProgress.updateMany({
@@ -145,6 +147,27 @@ async function completeInTx(
   if ((await tx.taskProgress.count({ where: { status: "DONE" } })) === TASK_COUNT) {
     await audit("SYSTEM", "all_done", null, undefined, tx);
   }
+}
+
+// Każde przejście jest warunkowe na stanie źródłowym: równoległa sprzeczna akcja (np. approve + reject)
+// nie znajdzie wiersza, rzuci invalid_transition i wycofa całą transakcję.
+async function transition(
+  tx: Tx,
+  taskId: number,
+  from: TaskStatus[],
+  data: Prisma.TaskProgressUpdateManyMutationInput,
+): Promise<void> {
+  const res = await tx.taskProgress.updateMany({ where: { taskId, status: { in: from } }, data });
+  if (res.count !== 1) throw new ProgressError("invalid_transition");
+}
+
+async function reviewSubmission(
+  tx: Tx,
+  id: string,
+  data: Prisma.SubmissionUpdateManyMutationInput,
+): Promise<void> {
+  const res = await tx.submission.updateMany({ where: { id, status: "PENDING" }, data });
+  if (res.count !== 1) throw new ProgressError("invalid_transition");
 }
 
 async function getProgressOrThrow(tx: Tx, taskId: number) {
@@ -213,8 +236,8 @@ export async function approve(taskId: number): Promise<void> {
     const sub = await latestPending(tx, taskId);
     if (!sub) throw new ProgressError("invalid_transition");
 
-    await tx.submission.update({ where: { id: sub.id }, data: { status: "APPROVED", reviewedAt: new Date() } });
-    await completeInTx(tx, taskId, { source: "MANUAL", resultSeconds: sub.durationS, resultDistanceM: sub.distanceM });
+    await reviewSubmission(tx, sub.id, { status: "APPROVED", reviewedAt: new Date() });
+    await completeInTx(tx, taskId, ["PENDING_REVIEW"], { source: "MANUAL", resultSeconds: sub.durationS, resultDistanceM: sub.distanceM });
     await audit("ADMIN", "approve", taskId, { submissionId: sub.id }, tx);
   });
 }
@@ -226,11 +249,8 @@ export async function reject(taskId: number, reason: string): Promise<void> {
     const sub = await latestPending(tx, taskId);
     if (!sub) throw new ProgressError("invalid_transition");
 
-    await tx.submission.update({
-      where: { id: sub.id },
-      data: { status: "REJECTED", reviewedAt: new Date(), reviewNote: reason },
-    });
-    await tx.taskProgress.update({ where: { taskId }, data: { status: "ACTIVE", lastRejectReason: reason } });
+    await reviewSubmission(tx, sub.id, { status: "REJECTED", reviewedAt: new Date(), reviewNote: reason });
+    await transition(tx, taskId, ["PENDING_REVIEW"], { status: "ACTIVE", lastRejectReason: reason });
     await audit("ADMIN", "reject", taskId, { submissionId: sub.id, reason }, tx);
   });
 }
@@ -258,11 +278,17 @@ export async function completeWithCode(
       return { ok: false, error: "bad_code" } as const;
     }
 
+    // Przy PENDING_REVIEW kod zatwierdza oczekujące zgłoszenie i przejmuje jego wynik (np. referencja zad. 6 → 11).
+    const sub = progress.status === "PENDING_REVIEW" ? await latestPending(tx, taskId) : null;
     await tx.submission.updateMany({
       where: { taskId, status: "PENDING" },
       data: { status: "APPROVED", reviewedAt: new Date(), reviewNote: "kod" },
     });
-    await completeInTx(tx, taskId, { source: "CODE" });
+    await completeInTx(tx, taskId, [progress.status], {
+      source: "CODE",
+      resultSeconds: sub?.durationS,
+      resultDistanceM: sub?.distanceM,
+    });
     await audit("PLAYER", "code_ok", taskId, undefined, tx);
     return { ok: true } as const;
   });
@@ -275,16 +301,13 @@ export async function undoLast(): Promise<number | null> {
     if (!last) return null;
     const taskId = last.taskId;
 
-    await tx.taskProgress.update({
-      where: { taskId },
-      data: {
-        status: "ACTIVE",
-        completedAt: null,
-        source: null,
-        resultSeconds: null,
-        resultDistanceM: null,
-        lastRejectReason: null,
-      },
+    await transition(tx, taskId, ["DONE"], {
+      status: "ACTIVE",
+      completedAt: null,
+      source: null,
+      resultSeconds: null,
+      resultDistanceM: null,
+      lastRejectReason: null,
     });
 
     const nextId = taskId + 1;
