@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.data
+backups
+deploy.conf
+.env*
+design
+docs
+tests
+scripts
+*.md
+docker-compose.dev.yml

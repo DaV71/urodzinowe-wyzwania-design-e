@@ -92,7 +92,7 @@ dowody per zadanie: SPEC §5, model danych: SPEC §7, panel: SPEC §9.
 - Produces: `getEnv(): Env` (memoizowane), `loadEnv(source): Env` (czyste); `prisma` (singleton);
   `site` (`{ name, age, rewardTitle, rewardDescription, from, dateLabel, stages, totalTasks }`).
 
-- [ ] **Krok 1: Inicjalizacja**
+- [x] **Krok 1: Inicjalizacja**
 
 Repo git już istnieje (commit "initial" na `main`). Upewnij się, że jesteś na `claude/auto`.
 ```bash
@@ -104,7 +104,7 @@ npm i -D prisma@^7.10 vitest@^3 @types/pg dotenv
 Jeśli `create-next-app` odmówi pracy w niepustym katalogu: uruchom w katalogu tymczasowym i skopiuj pliki
 (bez `README.md`, `public/*.svg`, `src/app/page.tsx`). **Nie tworzyć `src/app/page.tsx`** (powstaje w T7).
 
-- [ ] **Krok 2: Test `loadEnv` (failing)** — `src/lib/env.test.ts`:
+- [x] **Krok 2: Test `loadEnv` (failing)** — `src/lib/env.test.ts`:
 ```ts
 import { describe, it, expect } from "vitest";
 import { loadEnv } from "./env";
@@ -125,8 +125,8 @@ describe("loadEnv", () => {
   it("odrzuca za krótki AUTH_SECRET", () => expect(() => loadEnv({ ...base, AUTH_SECRET: "short" })).toThrow(/AUTH_SECRET/));
 });
 ```
-- [ ] **Krok 3: FAIL** — `npx vitest run src/lib/env.test.ts`.
-- [ ] **Krok 4: `src/lib/env.ts`**
+- [x] **Krok 3: FAIL** — `npx vitest run src/lib/env.test.ts`.
+- [x] **Krok 4: `src/lib/env.ts`**
 ```ts
 import { z } from "zod";
 const schema = z.object({
@@ -148,7 +148,7 @@ export function loadEnv(source: Record<string, string | undefined>): Env {
 let cached: Env | undefined;
 export function getEnv(): Env { return (cached ??= loadEnv(process.env)); }
 ```
-- [ ] **Krok 5: Konfiguracja**
+- [x] **Krok 5: Konfiguracja**
 
 `prisma.config.ts`:
 ```ts
@@ -206,8 +206,8 @@ button, input, textarea { font-family:inherit; } button { cursor:pointer; }
 `package.json` scripts: `dev`, `build`, `start`, `check: "tsc --noEmit && vitest run"`, `test: "vitest run"`,
 `db:up: "docker compose -f docker-compose.dev.yml up -d"`, `db:migrate: "prisma migrate dev"`, `db:seed: "prisma db seed"`,
 `postinstall: "prisma generate"`.
-- [ ] **Krok 6: PASS** `npx vitest run src/lib/env.test.ts` (3 testy) i `tsc --noEmit` (tymczasowy `model Ping { id Int @id }` w schemacie, jeśli `generate` wymaga modelu; T2 go zastąpi).
-- [ ] **Krok 7: Commit** `claude: T1 — szkielet Next 16 + Prisma 7 + Vitest`.
+- [x] **Krok 6: PASS** `npx vitest run src/lib/env.test.ts` (3 testy) i `tsc --noEmit` (tymczasowy `model Ping { id Int @id }` w schemacie, jeśli `generate` wymaga modelu; T2 go zastąpi).
+- [x] **Krok 7: Commit** `claude: T1 — szkielet Next 16 + Prisma 7 + Vitest`.
 
 ---
 

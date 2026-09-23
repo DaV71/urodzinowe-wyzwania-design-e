@@ -1,0 +1,13 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Tymczasowy model — T2 zastąpi go docelowym schematem.
+model Ping {
+  id Int @id
+}
