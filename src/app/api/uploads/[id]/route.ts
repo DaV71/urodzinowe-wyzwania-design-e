@@ -19,6 +19,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   return new Response(file.stream, {
     headers: {
       "Content-Type": file.contentType,
+      "Content-Length": String(file.size),
       "Cache-Control": "private, max-age=3600",
       "X-Content-Type-Options": "nosniff",
       "Content-Disposition": "inline",
