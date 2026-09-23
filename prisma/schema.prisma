@@ -7,7 +7,102 @@ datasource db {
   provider = "postgresql"
 }
 
-// Tymczasowy model — T2 zastąpi go docelowym schematem.
-model Ping {
-  id Int @id
+enum TaskStatus {
+  LOCKED
+  ACTIVE
+  PENDING_REVIEW
+  DONE
+}
+
+enum Proof {
+  PHOTO
+  PHOTO_OPTIONAL
+  NONE
+}
+
+enum Source {
+  MANUAL
+  CODE
+  ADMIN
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Actor {
+  PLAYER
+  ADMIN
+  SYSTEM
+}
+
+model Task {
+  id              Int           @id
+  stage           Int
+  title           String
+  description     String
+  proof           Proof
+  proofHint       String
+  askDistance     Boolean
+  askDuration     Boolean
+  maxPhotos       Int
+  compareToTask   Int?
+  minImprovementS Int?
+  minDistanceM    Int?
+  maxDurationS    Int?
+  progress        TaskProgress?
+  submissions     Submission[]
+}
+
+model TaskProgress {
+  taskId           Int        @id
+  task             Task       @relation(fields: [taskId], references: [id])
+  status           TaskStatus @default(LOCKED)
+  unlockedAt       DateTime?
+  completedAt      DateTime?
+  source           Source?
+  resultSeconds    Int?
+  resultDistanceM  Int?
+  lastRejectReason String?
+  updatedAt        DateTime   @updatedAt
+}
+
+model Submission {
+  id          String           @id @default(cuid())
+  taskId      Int
+  task        Task             @relation(fields: [taskId], references: [id])
+  note        String?
+  photos      Json
+  photoHashes Json
+  distanceM   Int?
+  durationS   Int?
+  warnings    Json
+  status      SubmissionStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  reviewedAt  DateTime?
+  reviewNote  String?
+
+  @@index([status])
+}
+
+model CodeAttempt {
+  id        String   @id @default(cuid())
+  taskId    Int
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     Actor
+  action    String
+  taskId    Int?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }

@@ -222,7 +222,7 @@ button, input, textarea { font-family:inherit; } button { cursor:pointer; }
   `Source {MANUAL, CODE, ADMIN}`, `SubmissionStatus {PENDING, APPROVED, REJECTED}`, `Actor {PLAYER, ADMIN, SYSTEM}`;
   `taskSeedSchema` (zod), `TaskSeed`, `TASK_COUNT = 28`, `STAGE_SIZE = 7`.
 
-- [ ] **Krok 1: `src/lib/tasks.ts`**
+- [x] **Krok 1: `src/lib/tasks.ts`**
 ```ts
 import { z } from "zod";
 export const TASK_COUNT = 28; export const STAGE_SIZE = 7;
@@ -237,10 +237,10 @@ export const taskSeedSchema = z.object({
 }).refine((t) => (t.compareToTask === undefined) === (t.minImprovementS === undefined), { message: "compareToTask i minImprovementS razem" });
 export type TaskSeed = z.infer<typeof taskSeedSchema>;
 ```
-- [ ] **Krok 2: Test `tasks.test.ts` (failing)**: 28 zadań o id 1..28, po 7 na etap; każde przechodzi `taskSeedSchema`;
+- [x] **Krok 2: Test `tasks.test.ts` (failing)**: 28 zadań o id 1..28, po 7 na etap; każde przechodzi `taskSeedSchema`;
   `PHOTO`/`PHOTO_OPTIONAL` mają `proofHint` ≠ ""; zadanie 11 ma `compareToTask 6, minImprovementS 30`; zadanie 21 ma `proof NONE`;
   8 i 14 mają `maxPhotos 4`; 2 ma `maxDurationS 2400`, 26 ma `maxDurationS 2100`; każde `askDistance` ma `minDistanceM`.
-- [ ] **Krok 3: `prisma/seed-data/tasks.json`** — 28 obiektów wg SPEC §5 (tytuły dosłownie z `zadania.md`, opisy 1–2 zdania w tonie
+- [x] **Krok 3: `prisma/seed-data/tasks.json`** — 28 obiektów wg SPEC §5 (tytuły dosłownie z `zadania.md`, opisy 1–2 zdania w tonie
   makiety). Przykłady:
 ```json
 [
@@ -258,7 +258,7 @@ export type TaskSeed = z.infer<typeof taskSeedSchema>;
 Pozostałe zadania wg tabeli w SPEC §5 (3, 4, 10, 13, 15, 18, 19, 22, 25, 27 jak 6 z odpowiednim `minDistanceM`; 5, 12, 17 jak 9;
 7, 16, 23 `PHOTO`, `askDuration true`; 14 jak 8 bez `askDistance`; 20 `PHOTO`, `askDistance` + `askDuration`, `minDistanceM 3000`;
 24 `PHOTO_OPTIONAL`, `askDuration true`).
-- [ ] **Krok 4: `prisma/schema.prisma`** (dokładnie SPEC §7):
+- [x] **Krok 4: `prisma/schema.prisma`** (dokładnie SPEC §7):
 ```prisma
 generator client { provider = "prisma-client"; output = "../src/generated/prisma" }
 datasource db { provider = "postgresql" }
@@ -316,9 +316,9 @@ model CodeAttempt { id String @id @default(cuid()); taskId Int; success Boolean;
 model AuditLog { id String @id @default(cuid()); actor Actor; action String; taskId Int?; meta Json?; createdAt DateTime @default(now()); @@index([createdAt]) }
 ```
 `npm run db:up && npx prisma migrate dev --name init`.
-- [ ] **Krok 5: `prisma/seed.cjs`** (czysty JS + `pg`, idempotentny UPSERT wszystkich kolumn `Task`, transakcja, `console.log("Seed: 28 zadań (upsert).")`,
+- [x] **Krok 5: `prisma/seed.cjs`** (czysty JS + `pg`, idempotentny UPSERT wszystkich kolumn `Task`, transakcja, `console.log("Seed: 28 zadań (upsert).")`,
   exit 1 przy błędzie). Uruchom `npm run db:seed` dwa razy — bez błędu, 28 wierszy.
-- [ ] **Krok 6: PASS** `npm run check`. **Commit** `claude: T2 — schemat Prisma, seed 28 zadań`.
+- [x] **Krok 6: PASS** `npm run check`. **Commit** `claude: T2 — schemat Prisma, seed 28 zadań`.
 
 ---
 
