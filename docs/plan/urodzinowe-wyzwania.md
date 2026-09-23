@@ -335,19 +335,19 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   `setPlayerCookie()`; `isAdmin()`, `requireAdmin()` (redirect `/admin/login`), `setAdminCookie()`, `clearAdminCookie()`;
   action `loginAdmin(prev, formData)`.
 
-- [ ] **Krok 1: Test `session` (failing)**: podpis i weryfikacja; zmieniony znak → null; inny sekret → null; brak kropki → null;
+- [x] **Krok 1: Test `session` (failing)**: podpis i weryfikacja; zmieniony znak → null; inny sekret → null; brak kropki → null;
   `safeEqual` różne długości → false, równe → true.
-- [ ] **Krok 2: Implementacja `session.ts`** (`timingSafeEqual` na buforach równej długości).
-- [ ] **Krok 3: `player.ts`/`admin.ts`** — `cookies()` z `next/headers` (async; context7); payload `player:<issuedAtMs>` /
+- [x] **Krok 2: Implementacja `session.ts`** (`timingSafeEqual` na buforach równej długości).
+- [x] **Krok 3: `player.ts`/`admin.ts`** — `cookies()` z `next/headers` (async; context7); payload `player:<issuedAtMs>` /
   `admin:<issuedAtMs>`; ważność 120 / 30 dni sprawdzana przy odczycie; `httpOnly`, `sameSite:"lax"`, `secure` w prod, `path:"/"`.
-- [ ] **Krok 4: `start/[token]/route.ts`** — `safeEqual(token, PLAYER_TOKEN)` → cookie → `redirect("/")`; inaczej 404 "Nie znaleziono".
-- [ ] **Krok 5: `admin/login`** — formularz z hasłem, action: `safeEqual` → cookie → `redirect("/admin")`; błąd: `sleep(1000)` + "Nieprawidłowe hasło".
+- [x] **Krok 4: `start/[token]/route.ts`** — `safeEqual(token, PLAYER_TOKEN)` → cookie → `redirect("/")`; inaczej 404 "Nie znaleziono".
+- [x] **Krok 5: `admin/login`** — formularz z hasłem, action: `safeEqual` → cookie → `redirect("/admin")`; błąd: `sleep(1000)` + "Nieprawidłowe hasło".
   Karta w stylu koperty aktywnej (SPEC §8), mobile-first.
-- [ ] **Krok 6: `src/proxy.ts`** — `/admin` (bez `/admin/login`) bez ważnego cookie → redirect `/admin/login`; wszystkie odpowiedzi
+- [x] **Krok 6: `src/proxy.ts`** — `/admin` (bez `/admin/login`) bez ważnego cookie → redirect `/admin/login`; wszystkie odpowiedzi
   `X-Robots-Tag: noindex, nofollow`; `matcher: ["/((?!_next|api/health).*)"]`. Podpis weryfikuj Web Crypto (`crypto.subtle`), chyba że
   context7 potwierdzi runtime Node w proxy 16.3 — wtedy `session.ts`. Opisz wybór w raporcie.
-- [ ] **Krok 7: Ręcznie** — `curl -I localhost:3000/admin` → 307; `/start/zly` → 404; `/start/$PLAYER_TOKEN` → 307 + `Set-Cookie: bd_player`.
-- [ ] **Krok 8: `npm run check`**, commit `claude: T3 — sesje, link startowy, logowanie admina, proxy`.
+- [x] **Krok 7: Ręcznie** — `curl -I localhost:3000/admin` → 307; `/start/zly` → 404; `/start/$PLAYER_TOKEN` → 307 + `Set-Cookie: bd_player`.
+- [x] **Krok 8: `npm run check`**, commit `claude: T3 — sesje, link startowy, logowanie admina, proxy`.
 
 ---
 
