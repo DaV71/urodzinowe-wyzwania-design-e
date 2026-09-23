@@ -1,0 +1,23 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 24px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.tagline {
+  color: var(--accent);
+  text-align: right;
+}
+
+@media (min-width: 1024px) {
+  .bar {
+    padding-top: 28px;
+    font-size: 13px;
+  }
+}

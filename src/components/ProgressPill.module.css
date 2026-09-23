@@ -1,0 +1,20 @@
+.pill {
+  width: fit-content;
+  margin: 22px auto 0;
+  padding: 6px 14px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+@media (min-width: 1024px) {
+  .pill {
+    margin-top: 26px;
+    padding: 8px 18px;
+    font-size: 13px;
+  }
+}

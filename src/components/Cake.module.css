@@ -1,0 +1,188 @@
+/*
+ * Wymiary mobile wyrażone w jednostce --u (1px). Poniżej 390 px szerokości viewportu --u maleje
+ * proporcjonalnie, więc cały tort (350 px) skaluje się do (100vw - 40px) bez transform
+ * i bez pustej przestrzeni pod spodem. Desktop (≥ 1024 px) ma własne wartości w px.
+ */
+.cake {
+  --u: 1px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: calc(350 * var(--u));
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+@media (max-width: 389px) {
+  .cake {
+    --u: calc((100vw - 40px) / 350);
+  }
+}
+
+.candles {
+  display: flex;
+  align-items: flex-end;
+  gap: calc(4 * var(--u));
+  height: calc(56 * var(--u));
+}
+
+.candle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(2 * var(--u));
+}
+
+.flameSlot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: calc(8 * var(--u));
+  height: calc(13 * var(--u));
+}
+
+/* Niezapalona: kółko 6×6 z kreskowanym obrysem. */
+.flame {
+  box-sizing: border-box;
+  width: calc(6 * var(--u));
+  height: calc(6 * var(--u));
+  border: calc(2 * var(--u)) dashed var(--locked);
+  border-radius: 999px;
+  background: transparent;
+  transition: box-shadow 0.4s, background 0.4s;
+}
+
+/* Zapalona: żółta łezka z poświatą. */
+.lit .flame {
+  width: 100%;
+  height: 100%;
+  border: calc(2 * var(--u)) solid var(--ink);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: var(--yellow);
+  box-shadow: 0 0 0 3px rgba(255, 210, 63, 0.35), 0 0 12px rgba(255, 150, 30, 0.6);
+}
+
+.wick {
+  width: calc(2 * var(--u));
+  height: calc(6 * var(--u));
+  background: var(--ink);
+}
+
+.body {
+  box-sizing: border-box;
+  width: calc(8 * var(--u));
+  height: calc(24 * var(--u));
+  border: calc(2 * var(--u)) solid var(--ink);
+  border-radius: calc(3 * var(--u));
+  background: repeating-linear-gradient(-45deg, #fff 0 4px, var(--accent) 4px 8px);
+}
+
+.layerTop {
+  box-sizing: border-box;
+  width: calc(240 * var(--u));
+  height: calc(42 * var(--u));
+  margin-top: calc(-3 * var(--u));
+  border: calc(3 * var(--u)) solid var(--ink);
+  border-radius: calc(12 * var(--u)) calc(12 * var(--u)) calc(6 * var(--u)) calc(6 * var(--u));
+  background: var(--yellow);
+}
+
+.layerMiddle {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(300 * var(--u));
+  height: calc(62 * var(--u));
+  border: calc(3 * var(--u)) solid var(--ink);
+  border-top: 0;
+  border-radius: 0 0 calc(6 * var(--u)) calc(6 * var(--u));
+  background: var(--accent);
+  font-family: var(--font-display);
+  font-size: calc(44 * var(--u));
+  letter-spacing: calc(3 * var(--u));
+  color: var(--bg);
+}
+
+.layerBottom {
+  box-sizing: border-box;
+  width: calc(350 * var(--u));
+  height: calc(50 * var(--u));
+  border: calc(3 * var(--u)) solid var(--ink);
+  border-top: 0;
+  border-radius: 0 0 calc(8 * var(--u)) calc(8 * var(--u));
+  background-color: var(--card);
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--ink) 0 calc(3 * var(--u)),
+    transparent calc(3 * var(--u)) calc(22 * var(--u))
+  );
+  background-size: 100% calc(12 * var(--u));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+}
+
+.base {
+  box-sizing: border-box;
+  width: calc(350 * var(--u));
+  height: calc(12 * var(--u));
+  border: calc(3 * var(--u)) solid var(--ink);
+  border-top: 0;
+  border-radius: 0 0 calc(10 * var(--u)) calc(10 * var(--u));
+  background: var(--ink);
+  box-shadow: calc(6 * var(--u)) calc(6 * var(--u)) 0 var(--ink);
+}
+
+@media (min-width: 1024px) {
+  .cake {
+    width: 480px;
+  }
+
+  .candles {
+    gap: 5px;
+    height: 72px;
+  }
+
+  .flameSlot {
+    width: 11px;
+    height: 17px;
+  }
+
+  .body {
+    width: 12px;
+    height: 36px;
+  }
+
+  .layerTop {
+    width: 320px;
+    height: 52px;
+    border-radius: 14px 14px 6px 6px;
+  }
+
+  .layerMiddle {
+    width: 400px;
+    height: 84px;
+    font-size: 60px;
+    letter-spacing: 4px;
+  }
+
+  .layerBottom {
+    width: 480px;
+    height: 64px;
+    background-image: repeating-linear-gradient(90deg, var(--ink) 0 3px, transparent 3px 26px);
+    background-size: 100% 14px;
+  }
+
+  .base {
+    width: 480px;
+    height: 14px;
+    box-shadow: 8px 8px 0 var(--ink);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flame {
+    transition: none;
+  }
+}

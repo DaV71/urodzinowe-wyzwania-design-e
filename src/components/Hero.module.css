@@ -1,0 +1,45 @@
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  /* Poniżej 390 px skaluje się proporcjonalnie jak tort, żeby "ZDMUCHNIESZ…" nie łamało się. */
+  font-size: min(48px, calc((100vw - 40px) * 48 / 350));
+  line-height: 0.98;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.name {
+  color: var(--accent);
+}
+
+.lead {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+@media (min-width: 1024px) {
+  .hero {
+    gap: 14px;
+  }
+
+  .title {
+    font-size: 68px;
+    line-height: 0.96;
+  }
+
+  .lead {
+    font-size: 17px;
+    line-height: 1.55;
+    max-width: 480px;
+  }
+}

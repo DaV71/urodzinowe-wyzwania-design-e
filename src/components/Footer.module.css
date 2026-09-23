@@ -1,0 +1,13 @@
+.footer {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .footer {
+    font-size: 13px;
+    text-align: left;
+  }
+}

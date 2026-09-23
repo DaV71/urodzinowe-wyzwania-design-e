@@ -422,18 +422,18 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   `formatKm(m): "2,10"`; `IconCheck`, `IconDumbbell`, `IconLock`, `IconGift` (`{ size?, strokeWidth?, color? }`);
   `<TopBar dateLabel />`, `<Cake done total age />`, `<ProgressPill done total />`, `<Hero name total />`, `<StageHeader index name />`, `<Footer from />`.
 
-- [ ] **Krok 1: Test `text` (failing)**: `plural` 1/2/5/12/22/25/0 (koperta/koperty/kopert/kopert/koperty/kopert/kopert);
+- [x] **Krok 1: Test `text` (failing)**: `plural` 1/2/5/12/22/25/0 (koperta/koperty/kopert/kopert/koperty/kopert/kopert);
   `formatDuration(760)="12:40"`, `formatDuration(3723)="1:02:03"`; `parseDuration("12:40")=760`, `"1:02:03"=3723`, `"abc"=null`, `"12:70"=null`;
   `formatKm(2100)="2,10"`.
-- [ ] **Krok 2: Implementacja** (reguła polska: 1 → one; `n%10∈2..4 && n%100∉12..14` → few; inaczej many).
-- [ ] **Krok 3: `icons.tsx`** — 4 ikony ze ścieżek SPEC §8.
-- [ ] **Krok 4: Komponenty** — wartości 1:1 ze SPEC §8, mobile-first, `@media (min-width:1024px)`. `Cake`: `total` świeczek, klasa `lit`
+- [x] **Krok 2: Implementacja** (reguła polska: 1 → one; `n%10∈2..4 && n%100∉12..14` → few; inaczej many).
+- [x] **Krok 3: `icons.tsx`** — 4 ikony ze ścieżek SPEC §8.
+- [x] **Krok 4: Komponenty** — wartości 1:1 ze SPEC §8, mobile-first, `@media (min-width:1024px)`. `Cake`: `total` świeczek, klasa `lit`
   gdy `i < done`, `transition`, `aria-label`; kontener mobile `width 350px; max-width 100%; transform-origin: top center` +
   `@media (max-width:389px){ transform: scale(calc((100vw - 40px)/350)); }`. `Hero`: `Sto lat, <span>{name}</span>!<br/>Zanim zdmuchniesz…`,
   lead z `plural(total,"kopertę","koperty","kopert")`.
-- [ ] **Krok 5: `/dev/preview`** (`notFound()` w produkcji): komponenty z `done = 0, 5, 28`. Sprawdź w przeglądarce 390 px i 1280 px
+- [x] **Krok 5: `/dev/preview`** (`notFound()` w produkcji): komponenty z `done = 0, 5, 28`. Sprawdź w przeglądarce 390 px i 1280 px
   (skill `frontend-design` przy stylach).
-- [ ] **Krok 6: `npm run check`**, commit `claude: T5 — tokeny, tekst, tort i komponenty bazowe`.
+- [x] **Krok 6: `npm run check`**, commit `claude: T5 — tokeny, tekst, tort i komponenty bazowe`.
 
 ---
 
