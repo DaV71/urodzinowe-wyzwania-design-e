@@ -448,11 +448,11 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   `openUpload(path): Promise<{ stream: ReadableStream; contentType: string } | null>`,
   `ALLOWED = {"image/jpeg":".jpg","image/png":".png","image/webp":".webp","image/heic":".heic"}`, `MAX_BYTES = 10*1024*1024`.
 
-- [ ] **Krok 1: Testy (failing)** z `UPLOAD_DIR` tymczasowym: JPEG → plik istnieje, `path` `/^[0-9a-f-]{36}\.jpg$/`, `hash` = sha256 hex
+- [x] **Krok 1: Testy (failing)** z `UPLOAD_DIR` tymczasowym: JPEG → plik istnieje, `path` `/^[0-9a-f-]{36}\.jpg$/`, `hash` = sha256 hex
   zawartości; `text/plain` → `type`; 11 MB → `size`; `openUpload("../../etc/passwd")` → null; nieistniejący → null.
-- [ ] **Krok 2: Implementacja** (`resolve` w obrębie `UPLOAD_DIR`, `mkdir -p`, `randomUUID()`, hash liczony ze strumienia).
-- [ ] **Krok 3: Route `GET /api/uploads/[id]`** — 404 gdy ani gracz, ani admin; `Cache-Control: private, max-age=3600`.
-- [ ] **Krok 4: `npm run check`**, commit `claude: T6 — uploady zdjęć`.
+- [x] **Krok 2: Implementacja** (`resolve` w obrębie `UPLOAD_DIR`, `mkdir -p`, `randomUUID()`, hash liczony ze strumienia).
+- [x] **Krok 3: Route `GET /api/uploads/[id]`** — 404 gdy ani gracz, ani admin; `Cache-Control: private, max-age=3600`.
+- [x] **Krok 4: `npm run check`**, commit `claude: T6 — uploady zdjęć`.
 
 ---
 
