@@ -52,7 +52,6 @@ dowody per zadanie: SPEC §5, model danych: SPEC §7, panel: SPEC §9.
     ├── proxy.ts
     ├── lib/{env.ts, db.ts, text.ts, audit.ts, progress.ts, codes.ts, uploads.ts, tasks.ts}
     ├── lib/auth/{session.ts, player.ts, admin.ts}
-    ├── lib/notify/telegram.ts
     ├── components/{icons.tsx, TopBar, Cake, ProgressPill, Hero, StageHeader, EnvelopeDone, EnvelopeActive,
     │              EnvelopeLocked, GiftLocked, GiftUnlocked, Footer, SubmitForm}  (Name.tsx + Name.module.css)
     ├── components/admin/{PendingCard, TaskTable, CodesList, DangerZone, CopyButton}.tsx
@@ -70,7 +69,7 @@ dowody per zadanie: SPEC §5, model danych: SPEC §7, panel: SPEC §9.
 | T1 Szkielet projektu | — | — |
 | T2 Schemat, seed, typy zadań | T1 | T9 (Docker bez seeda się nie zbuduje — T9 po T2), T10 |
 | T3 Sesje i dostęp | T1 | T2, T4, T5, T6, T10 |
-| T4 Maszyna stanów, kody, audyt, Telegram | T2 | T3, T5, T6, T10 |
+| T4 Maszyna stanów, kody, audyt | T2 | T3, T5, T6, T10 |
 | T5 Tokeny CSS, tekst, komponenty bazowe | T1 | T2, T3, T4, T6, T10 |
 | T6 Uploady | T1, T3 | T4, T5, T10 |
 | T7 Strona jubilata | T3, T4, T5, T6 | T8, T9 |
@@ -117,14 +116,13 @@ describe("loadEnv", () => {
   it("parsuje poprawny zestaw i ustawia domyślne NODE_ENV", () => {
     const env = loadEnv(base);
     expect(env.NODE_ENV).toBe("development");
-    expect(env.TELEGRAM_BOT_TOKEN).toBeUndefined();
+    expect(env.UPLOAD_DIR).toBe("./.data/uploads");
   });
   it("rzuca błąd z nazwami brakujących zmiennych", () => {
     const { AUTH_SECRET: _omit, ...rest } = base;
     expect(() => loadEnv(rest)).toThrow(/AUTH_SECRET/);
   });
   it("odrzuca za krótki AUTH_SECRET", () => expect(() => loadEnv({ ...base, AUTH_SECRET: "short" })).toThrow(/AUTH_SECRET/));
-  it("Telegram wymaga obu zmiennych naraz", () => expect(() => loadEnv({ ...base, TELEGRAM_BOT_TOKEN: "x" })).toThrow(/TELEGRAM_CHAT_ID/));
 });
 ```
 - [ ] **Krok 3: FAIL** — `npx vitest run src/lib/env.test.ts`.
@@ -140,11 +138,6 @@ const schema = z.object({
   ADMIN_PASSWORD: z.string().min(8),
   APP_URL: z.string().url(),
   UPLOAD_DIR: z.string().min(1),
-  TELEGRAM_BOT_TOKEN: z.string().min(1).optional(),
-  TELEGRAM_CHAT_ID: z.string().min(1).optional(),
-}).superRefine((v, ctx) => {
-  if (!!v.TELEGRAM_BOT_TOKEN !== !!v.TELEGRAM_CHAT_ID)
-    ctx.addIssue({ code: "custom", path: ["TELEGRAM_CHAT_ID"], message: "TELEGRAM_BOT_TOKEN i TELEGRAM_CHAT_ID muszą być ustawione razem" });
 });
 export type Env = z.infer<typeof schema>;
 export function loadEnv(source: Record<string, string | undefined>): Env {
@@ -181,7 +174,7 @@ if (process.env.NODE_ENV !== "production") g.prisma = prisma;
 `include: ["src/**/*.test.ts", "tests/**/*.test.ts"]`, `setupFiles: ["dotenv/config"]`.
 `docker-compose.dev.yml`: `db` `postgres:16`, `ports: ["127.0.0.1:5432:5432"]`, user/hasło/db `urodzinowe`, volume `dbdata_dev`.
 `.env.example`: klucze z `loadEnv` (`DATABASE_URL=postgresql://urodzinowe:urodzinowe@localhost:5432/urodzinowe`,
-`UPLOAD_DIR=./.data/uploads`, `APP_URL=http://localhost:3000`, sekrety `zmien-mnie-…` o wymaganej długości, Telegram zakomentowany).
+`UPLOAD_DIR=./.data/uploads`, `APP_URL=http://localhost:3000`, sekrety `zmien-mnie-…` o wymaganej długości).
 `.gitignore`: `node_modules/ .next/ .env .env.* !.env.example .data/ src/generated/ deploy.conf backups/ *.key *.crt *.csr`.
 `.dockerignore`: `node_modules .next .git .data backups deploy.conf .env* design docs tests scripts *.md docker-compose.dev.yml`
 (nie ignorować `docker/`, `prisma/`, `prisma.config.ts`).
@@ -213,7 +206,7 @@ button, input, textarea { font-family:inherit; } button { cursor:pointer; }
 `package.json` scripts: `dev`, `build`, `start`, `check: "tsc --noEmit && vitest run"`, `test: "vitest run"`,
 `db:up: "docker compose -f docker-compose.dev.yml up -d"`, `db:migrate: "prisma migrate dev"`, `db:seed: "prisma db seed"`,
 `postinstall: "prisma generate"`.
-- [ ] **Krok 6: PASS** `npx vitest run src/lib/env.test.ts` (4 testy) i `tsc --noEmit` (tymczasowy `model Ping { id Int @id }` w schemacie, jeśli `generate` wymaga modelu; T2 go zastąpi).
+- [ ] **Krok 6: PASS** `npx vitest run src/lib/env.test.ts` (3 testy) i `tsc --noEmit` (tymczasowy `model Ping { id Int @id }` w schemacie, jeśli `generate` wymaga modelu; T2 go zastąpi).
 - [ ] **Krok 7: Commit** `claude: T1 — szkielet Next 16 + Prisma 7 + Vitest`.
 
 ---
@@ -358,11 +351,11 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
 
 ---
 
-### T4: Maszyna stanów postępu, zgłoszenia, kody, audyt, Telegram
+### T4: Maszyna stanów postępu, zgłoszenia, kody, audyt
 
 **Pliki:**
 - Create: `src/lib/progress.ts`, `src/lib/progress.warnings.ts`, `src/lib/progress.warnings.test.ts`, `src/lib/codes.ts`,
-  `src/lib/codes.test.ts`, `src/lib/audit.ts`, `src/lib/notify/telegram.ts`, `tests/integration/setup.ts`,
+  `src/lib/codes.test.ts`, `src/lib/audit.ts`, `tests/integration/setup.ts`,
   `tests/integration/progress.test.ts`
 
 **Interfejsy:**
@@ -390,7 +383,7 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   — czyste; teksty: "Dystans {x} km poniżej progu {y} km", "Czas {mm:ss} powyżej limitu {mm:ss}", "Zgłoszone {n} min po odblokowaniu",
   "Zdjęcie użyte już w innym zgłoszeniu", "Czas {mm:ss} nie jest szybszy o {s} s od referencji {mm:ss}".
   `codes.ts`: `codeForTask(secret, taskId)`, `verifyCode(secret, taskId, input)`, `allCodes(secret)`.
-  `audit.ts`: `audit(actor, action, taskId?, meta?)`. `telegram.ts`: `notifyAdmin(text)` (no-op bez env; błędy logowane).
+  `audit.ts`: `audit(actor, action, taskId?, meta?)`. Dodatkowo `countPending(): Promise<number>` (liczba zadań `PENDING_REVIEW`) do tytułu strony admina.
 
 - [ ] **Krok 1: Test `codes` (failing)**: deterministyczne; różne taskId → różne; format `/^[A-Z2-9]{4}-[A-Z2-9]{4}$/`;
   `verifyCode` akceptuje `"abcd efgh"`, `"ABCD-EFGH"`, odrzuca zły; inny sekret → inny kod. Implementacja: HMAC-SHA256 → alfabet
@@ -410,10 +403,10 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   9. `completeWithCode(1, codeForTask(env.CODES_SECRET, 1))` → ok, DONE `source CODE`; zły → `bad_code` + CodeAttempt; 5 złych w 10 min → `rate_limited`.
   10. `undoLast()` po DONE 1 i 2 → 2; 2 ACTIVE bez `completedAt`, 3 LOCKED; przy `done 0` → null.
   11. `resetAll()` → jak po `ensureStarted`, Submission/CodeAttempt puste, AuditLog ma `reset`.
-  12. Zaliczenie 28 → `done 28`, brak ACTIVE; `notifyAdmin` (mock) wywołany z tekstem zawierającym "Tort gotowy".
-- [ ] **Krok 5: Implementacja `progress.ts`** — mutacje w `prisma.$transaction`, `audit(...)` przy każdej, `notifyAdmin` po `submit`
-  (tekst wg SPEC §5, link `${APP_URL}/admin#task-${id}`), po `completeWithCode`, po zaliczeniu 28. Unlock: `taskId+1 ≤ 28` → ACTIVE + `unlockedAt`.
-- [ ] **Krok 6: PASS** `npm run db:up && npx vitest run tests/integration src/lib`. **Commit** `claude: T4 — maszyna stanów, zgłoszenia, kody, audyt, Telegram`.
+  12. Zaliczenie 28 → `done 28`, brak ACTIVE; AuditLog ma wpis `all_done`.
+  13. `countPending()` → 0 na starcie, 1 po `submit(1, …)`, 0 po `approve(1)`.
+- [ ] **Krok 5: Implementacja `progress.ts`** — mutacje w `prisma.$transaction`, `audit(...)` przy każdej. Unlock: `taskId+1 ≤ 28` → ACTIVE + `unlockedAt`.
+- [ ] **Krok 6: PASS** `npm run db:up && npx vitest run tests/integration src/lib`. **Commit** `claude: T4 — maszyna stanów, zgłoszenia, kody, audyt`.
 
 ---
 
@@ -512,7 +505,8 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   `allCodes`, `clearAdminCookie`, `prisma.auditLog`, `getEnv().PLAYER_TOKEN`, `formatDuration`, `formatKm`.
 - Produces: actions `approveAction(taskId)`, `rejectAction(taskId, reason)`, `undoAction()`, `resetAction(confirmWord)`, `logoutAction()`.
 
-- [ ] **Krok 1: Strona** (`requireAdmin()`), sekcje i treść wg SPEC §9. `PendingCard` `id="task-{n}"`: metryki, dla `reference`
+- [ ] **Krok 1: Strona** (`requireAdmin()`), sekcje i treść wg SPEC §9. `generateMetadata` ustawia tytuł
+  `(${countPending()}) Urodzinowe wyzwania · admin` (bez nawiasu, gdy 0). `PendingCard` `id="task-{n}"`: metryki, dla `reference`
   tekst "ref. z zad. {id}: {mm:ss} → teraz {mm:ss}, {±s} s" z ✓/✗, zdjęcia (`<a href target=_blank><img>`), notatka, `warnings` jako żółte
   etykiety; Zatwierdź (h 52, czarny/żółty) i Odrzuć (pole powodu `required`). Mobile-first, max-width 720 na desktopie.
 - [ ] **Krok 2: Actions** — każda od `requireAdmin()`; `revalidatePath("/admin")` i `revalidatePath("/")`; `resetAction` tylko dla `"RESET"`.
@@ -552,13 +546,10 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
 - [ ] **Krok 3: `docker-compose.prod.yml`** — 1:1 z `demo-deploy.md` i SPEC §10: `name: urodzinowe`; `db` `postgres:16` tylko `internal`
   z healthcheck `pg_isready`; `app` `container_name: urodzinowe`, env: `NODE_ENV`, `DATABASE_URL`, `AUTH_SECRET`, `CODES_SECRET`,
   `PLAYER_TOKEN`, `ADMIN_PASSWORD` (wszystkie `:?komunikat`), `APP_URL: "https://${APP_DOMAIN:?APP_DOMAIN musi byc ustawiony w .env}"`,
-  `TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"`, `TELEGRAM_CHAT_ID: "${TELEGRAM_CHAT_ID:-}"`, `UPLOAD_DIR: /data/uploads`;
+  `UPLOAD_DIR: /data/uploads`;
   `volumes: ["uploads:/data/uploads"]`; `networks: [internal, web]`; labele `caddy`, `caddy.reverse_proxy: "{{upstreams 3000}}"`,
   `caddy.tls: "/certs/wildcard.crt /certs/wildcard.key"`, `caddy.import: secure_headers`, `caddy.request_body.max_size: 45MB`;
   healthcheck `fetch('http://localhost:3000/api/health')`, `start_period: 60s`; `networks: internal, web (external: true)`; `volumes: dbdata, uploads`.
-  Uwaga: pusta wartość `TELEGRAM_*` musi być traktowana przez `env.ts` jak brak — w T1 `loadEnv` dostaje `""`; implementer T9 sprawdza,
-  że `z.string().min(1).optional()` odrzuci pusty string, i jeśli tak, w `entrypoint.sh` dodaje `unset` pustych zmiennych
-  (`[ -n "${TELEGRAM_BOT_TOKEN:-}" ] || unset TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID`).
 - [ ] **Krok 4: `tests/docker-smoke.sh`** — `docker network create web 2>/dev/null || true`; `.env` testowy z losowymi wartościami;
   `docker compose -f docker-compose.prod.yml -f tests/compose.smoke.yml up -d --build` (override usuwa labele caddy i dodaje nic więcej);
   pętla ≤ 90 s na `docker inspect --format '{{.State.Health.Status}}' urodzinowe` == `healthy`; `down -v`. Asercje statyczne:
@@ -582,17 +573,19 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
 - [ ] **Krok 1: `tests/deploy-lib.test.sh` (failing)** — własne `assert_contains/assert_not_contains/assert_fails`:
   1. `validate_config` bez `SERVER_HOST` → die; komplet → `SSH_PORT=22`, `REPO_BRANCH=main`, `DEPLOY_DIR=urodzinowe`.
   2. `inject_git_token` → URL z tokenem; `gen_remote_code_script` zawiera `git remote set-url origin` bez tokenu.
-  3. `gen_remote_env_script app.example.pl TELEGRAM_BOT_TOKEN=__PLACEHOLDER__` zawiera `chmod 600 .env`, `env_set APP_DOMAIN`,
-     `env_set_if_missing` dla `POSTGRES_PASSWORD AUTH_SECRET CODES_SECRET PLAYER_TOKEN ADMIN_PASSWORD`; zawiera `__PLACEHOLDER__`, nie zawiera `sekret-testowy`.
+  3. `gen_remote_env_script app.example.pl` zawiera `chmod 600 .env`, `env_set APP_DOMAIN`, `env_set_if_missing` dla
+     `POSTGRES_PASSWORD AUTH_SECRET CODES_SECRET PLAYER_TOKEN ADMIN_PASSWORD`; `gen_remote_env_script app.example.pl ADMIN_PASSWORD=__PLACEHOLDER__`
+     (tryb `--set-secret`) zawiera `env_set ADMIN_PASSWORD "__PLACEHOLDER__"`, nie zawiera `sekret-testowy`.
   4. `gen_remote_bootstrap_script` przechodzi `bash -n`; zawiera `docker network create web` i `up -d --build`; nie zawiera `prisma migrate`.
   5. `bash scripts/deploy.sh --dry-run --config tests/fixtures/deploy.conf` → exit 0, zawiera `set -euo pipefail` i `app.example.pl`, nie zawiera `ssh `.
-  6. `gen_remote_secret_probe_script TELEGRAM_BOT_TOKEN` zawiera `grep -q '^TELEGRAM_BOT_TOKEN=' .env || echo TELEGRAM_BOT_TOKEN`.
+  6. `gen_remote_secret_probe_script ADMIN_PASSWORD` zawiera `grep -q '^ADMIN_PASSWORD=' .env || echo ADMIN_PASSWORD` (używane przez `--set-secret` do potwierdzenia rotacji).
 - [ ] **Krok 2: `deploy-lib.sh`** wg `demo-deploy.md` §4 i SPEC §10; `env_set` przez `awk` do pliku tymczasowego;
   `gen_secret(){ head -c 48 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 40; }`; po `.env` skrypt zdalny wypisuje
   "ADMIN_PASSWORD i PLAYER_TOKEN: `grep -E '^(ADMIN_PASSWORD|PLAYER_TOKEN)=' ~/urodzinowe/.env`".
 - [ ] **Krok 3: `deploy.sh`** — parsowanie → `load_config` → `validate_config` → dry-run (placeholdery, stdout, exit 0) → probe brakujących
-  sekretów przez ssh → Telegram: z lokalnego env lub `read -rs` (Enter = pomiń) → `gen_remote_bootstrap_script | ssh … 'bash -s'` →
-  `wait_for_url "https://$APP_DOMAIN/api/health" 180 5` → wypisz `https://$APP_DOMAIN/admin`.
+  (`--set-secret KEY`: wartość z lokalnego env lub `read -rs`, przekazana do `gen_remote_env_script` jako `KEY=VALUE`; zwykły deploy
+  nie prompt-uje o nic) → `gen_remote_bootstrap_script | ssh … 'bash -s'` → `wait_for_url "https://$APP_DOMAIN/api/health" 180 5` →
+  wypisz `https://$APP_DOMAIN/admin` i przypomnienie, jak odczytać `ADMIN_PASSWORD`.
 - [ ] **Krok 4: `deploy.conf.example`** — klucze z `demo-deploy.md` + `DEPLOY_DIR=urodzinowe`, `HEALTH_TIMEOUT=180`.
 - [ ] **Krok 5: PASS** `bash tests/deploy-lib.test.sh` (+ `shellcheck` jeśli jest). **Commit** `claude: T10 — skrypty deployu z testami`.
 
@@ -607,7 +600,7 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   do `backups/db-<data>.dump`; wolumen `urodzinowe_uploads` → `backups/uploads-<data>.tgz`; komentarz z komendami restore.
 - [ ] **Krok 2: `README.md`** — po polsku: co to jest, dev lokalny (`db:up`, `.env`, `db:migrate`, `db:seed`, `dev`), personalizacja
   (`src/config/site.ts`), zmiana treści zadań (`prisma/seed-data/tasks.json` + redeploy), deploy (`deploy.conf`, `--dry-run`, `deploy.sh`,
-  odczyt `ADMIN_PASSWORD`/linku), Telegram (BotFather, userinfobot), checklista Dawida (SPEC §13), kody do druku, backup.
+  odczyt `ADMIN_PASSWORD`/linku), checklista Dawida (SPEC §13), kody do druku, backup, rotacja sekretów (`--set-secret`).
 - [ ] **Krok 3: Commit** `claude: T11 — backup, README`.
 
 ---
@@ -619,7 +612,8 @@ Integracje z platformami sportowymi, automatyczna ocena dowodów, tryb "zdmuchiw
 ## Ryzyka i decyzje architektoniczne
 
 1. **Jeden mechanizm dla wszystkich zadań** (zgłoszenie → zatwierdzenie) zamiast integracji: mniej kodu, zero zależności zewnętrznych,
-   działa z każdym zegarkiem. Cena: każde zaliczenie wymaga kliknięcia Dawida (Telegram skraca to do minuty).
+   działa z każdym zegarkiem. Cena: każde zaliczenie wymaga wejścia Dawida do panelu (bez powiadomień — decyzja Dawida;
+   licznik oczekujących w tytule karty `/admin`, moduł powiadomień do dołożenia później jako osobne zadanie).
 2. **Ostrzeżenia zamiast twardych blokad** przy wartościach liczbowych: apka nie zna prawdy, Dawid tak. Twarda blokada tylko
    dla brakującego wymaganego zdjęcia.
 3. **Kody HMAC** zamiast losowych w DB: brak tabeli sekretów, lista na żądanie, rotacja przez `--set-secret CODES_SECRET`.

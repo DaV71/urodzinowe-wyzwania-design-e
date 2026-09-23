@@ -24,10 +24,10 @@ główna. Postęp żyje wyłącznie po stronie serwera. Zaliczenie zadania wymag
 | D4 | "Od nowa" tylko w panelu admina ("Resetuj postęp"). | Ochrona przed przypadkowym resetem. |
 | D5 | Personalizacja (imię, wiek, nagroda, opis, od kogo, data) w `src/config/site.ts`. | Nie są to sekrety; łatwa edycja. |
 | D6 | Emoji z `zadania.md` zostają w tytułach. | Charakter prezentu. |
-| D7 | **Przepływ zaliczania:** jubilat w otwartej kopercie klika "ZROBIONE — ZAPAL ŚWIECZKĘ", dołącza dowód (zdjęcie/screenshot, do 4 plików) i, gdy zadanie tego wymaga, wpisuje dystans i czas. Koperta przechodzi w stan "czeka na Dawida". Dawid dostaje Telegram i zatwierdza lub odrzuca (z powodem) w panelu. Po zatwierdzeniu świeczka się zapala i otwiera się następna koperta. | Jeden prosty mechanizm dla wszystkich 28 zadań; człowiek widzi dowód, apka pilnuje kolejności, dat i liczb. |
+| D7 | **Przepływ zaliczania:** jubilat w otwartej kopercie klika "ZROBIONE — ZAPAL ŚWIECZKĘ", dołącza dowód (zdjęcie/screenshot, do 4 plików) i, gdy zadanie tego wymaga, wpisuje dystans i czas. Koperta przechodzi w stan "czeka na Dawida". Dawid sam zagląda do panelu (bez powiadomień) i zatwierdza lub odrzuca (z powodem). Po zatwierdzeniu świeczka się zapala i otwiera się następna koperta. | Jeden prosty mechanizm dla wszystkich 28 zadań; człowiek widzi dowód, apka pilnuje kolejności, dat i liczb. |
 | D8 | **Kody odblokowujące** per zadanie (HMAC z sekretu, format `XXXX-XXXX`, lista tylko w panelu admina, limit 5 prób / 10 min). Kod zalicza zadanie natychmiast, bez zgłoszenia. | Tryb offline: Dawid mówi kod przy wspólnym biegu albo wkłada do fizycznej koperty. |
 | D9 | Dostęp jubilata: **sekretny link** `/start/<PLAYER_TOKEN>` ustawiający podpisane cookie na 120 dni. Bez loginu. Bez cookie strona pokazuje tylko zaklejoną kopertę i `noindex`. | Jedna osoba, zero tarcia. |
-| D10 | Admin: `/admin` z hasłem z `.env`, cookie sesji 30 dni (na telefonie Dawida zatwierdzanie to jedno wejście z Telegrama i jedno kliknięcie). | |
+| D10 | Admin: `/admin` z hasłem z `.env`, cookie sesji 30 dni (na telefonie Dawida zatwierdzanie to wejście na `/admin` i jedno kliknięcie). Liczba oczekujących zgłoszeń w tytule karty przeglądarki. | Bez powiadomień na start (decyzja Dawida); moduł powiadomień można dołożyć później. |
 | D11 | Stos: Next.js 16.3 (App Router, TS), Prisma 7.10 + `@prisma/adapter-pg`, Postgres 16, CSS Modules, Vitest, Node 24. Bez Tailwinda, bez Prisma 8 RC. | Style z artboardów 1:1. |
 | D12 | Zdjęcia na named volume `uploads`, serwowane przez chroniony route handler. Brak S3. | Jedna instancja. |
 
@@ -37,7 +37,6 @@ główna. Postęp żyje wyłącznie po stronie serwera. Zaliczenie zadania wymag
 - Prisma **7.10.x**: obowiązkowy `prisma.config.ts` (`datasource.url`, `migrations.path`, `migrations.seed`), generator `prisma-client` z wymaganym `output`, driver adapter `@prisma/adapter-pg` + `pg`, CLI nie ładuje `.env` (`import "dotenv/config"`). https://www.prisma.io/docs/guides/upgrade-prisma-orm/v7
 - Standalone nie zawiera `prisma.config.ts`, `prisma/` ani CLI → kopiujemy je do obrazu runtime osobno. https://github.com/prisma/prisma/discussions/29305
 - `node:24-slim` wymaga `openssl`. Wzorzec Vercel `with-docker`: 3 stage, `USER node`, `HOSTNAME=0.0.0.0`.
-- Telegram Bot API: `POST https://api.telegram.org/bot<TOKEN>/sendMessage` z `chat_id`, `text`; bot i chat_id zakłada się raz przez @BotFather i @userinfobot. https://core.telegram.org/bots/api#sendmessage
 
 ## 4. Architektura
 
@@ -45,7 +44,7 @@ główna. Postęp żyje wyłącznie po stronie serwera. Zaliczenie zadania wymag
 przeglądarka jubilata ──HTTPS──▶ caddy-docker-proxy ──sieć web──▶ app (Next.js 16, :3000)
 przeglądarka Dawida  ──HTTPS──▶      (istnieje)                     │ sieć internal
                                                               ┌─────┴─────┐
-app ──HTTPS──▶ api.telegram.org (powiadomienia)               ▼           ▼
+                                                              ▼           ▼
                                                         db (postgres)  volume uploads
 ```
 
@@ -63,7 +62,6 @@ wyłącznie stan renderowany dla niego.
 | `lib/progress.ts` | Maszyna stanów: `ensureStarted`, `getBoard`, `submit`, `approve`, `reject`, `completeWithCode`, `undoLast`, `resetAll`. Jedyne miejsce zmieniające `TaskProgress`. |
 | `lib/codes.ts` | Kody HMAC i ich weryfikacja. |
 | `lib/uploads.ts` | Zapis/odczyt zdjęć w `UPLOAD_DIR` (typ, rozmiar, ścieżka). |
-| `lib/notify/telegram.ts` | `notifyAdmin(text)`; no-op bez konfiguracji. |
 | `lib/audit.ts`, `lib/text.ts` | Log zdarzeń; pluralizacja i formatowanie czasu. |
 | `app/` | `/` (jubilat), `/start/[token]`, `/admin`, `/admin/login`, `/api/health`, `/api/uploads/[id]`. |
 | `components/` | UI 1:1 z artboardów + `SubmitForm` + komponenty panelu. |
@@ -109,10 +107,9 @@ LOCKED ──(poprzednie DONE)──▶ ACTIVE ──(kod | approve)──▶ DO
 DONE ──(admin undoLast; tylko ostatnie DONE)──▶ ACTIVE, jego następca ACTIVE → LOCKED
 ```
 
-### Powiadomienia Telegram (gdy skonfigurowane)
-- Zgłoszenie: `📬 Koperta 6 · Przebiegnij 2 km — 2,10 km, 12:40, 1 zdjęcie. Zatwierdź: <APP_URL>/admin#task-6`
-- Kod: `🔑 Koperta 5 zaliczona kodem.`
-- Wszystkie 28: `🎂 Tort gotowy — prezent odblokowany!`
+### Powiadomienia
+Brak (decyzja Dawida). Panel `/admin` pokazuje zgłoszenia do zatwierdzenia na górze, a `<title>` strony admina
+zaczyna się od liczby oczekujących, np. `(2) Urodzinowe wyzwania · admin`. Jubilat w kopercie widzi "czeka na Dawida" z datą.
 
 ## 6. Dostęp i bezpieczeństwo
 
@@ -222,8 +219,7 @@ Mobile-first (Dawid zatwierdza z telefonu). Sekcje w kolejności:
 - `docker-compose.prod.yml`: `name: urodzinowe`; `db` tylko `internal`; `app` w `internal + web`, bez `ports:`,
   labele `caddy.*`, volume `uploads`, healthcheck `/api/health`, `start_period 60s`.
 - Zmienne: `APP_DOMAIN` (config); losowane i zachowywane na serwerze: `POSTGRES_PASSWORD`, `AUTH_SECRET`, `CODES_SECRET`,
-  `PLAYER_TOKEN`, `ADMIN_PASSWORD` (deploy wypisuje jak odczytać); opcjonalne od człowieka (prompt przy pierwszym
-  deployu, Enter = pomiń): `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
+  `PLAYER_TOKEN`, `ADMIN_PASSWORD` (deploy wypisuje jak odczytać). Żadnych sekretów od człowieka.
 - `scripts/deploy.sh` (`--dry-run`, `--config`, `--set-secret KEY`, `--no-wait`) + `scripts/lib/deploy-lib.sh` +
   `tests/deploy-lib.test.sh`; `scripts/backup.sh` (pg_dump + tar wolumenu uploads).
 - Dev lokalny: `docker-compose.dev.yml` (tylko Postgres), `.env` lokalny.
@@ -231,13 +227,14 @@ Mobile-first (Dawid zatwierdza z telefonu). Sekcje w kolejności:
 ## 11. Poza zakresem
 
 Integracje z platformami sportowymi (Strava, Garmin, Samsung Health), automatyczna ocena dowodów (OCR/vision),
+powiadomienia dla Dawida (Telegram, Discord, Web Push, e-mail),
 tryb "zdmuchiwane", wielu graczy, S3, e-mail, PWA, i18n, Prisma 8, CI/CD.
 
 ## 12. Ryzyka
 
 | Ryzyko | Mitygacja |
 |---|---|
-| Dawid nie zauważy zgłoszenia | Telegram z linkiem; w kopercie jubilat widzi "czeka na Dawida" z datą. |
+| Dawid nie zauważy zgłoszenia | Licznik oczekujących w tytule karty `/admin`; jubilat widzi "czeka na Dawida" z datą i powie sam. Powiadomienia (Web Push / webhook) do dołożenia później jako osobne zadanie. |
 | Podrobiony screenshot | Dawid ogląda dowód; ostrzeżenia (za szybko po odblokowaniu, ten sam plik, wartości poniżej progu). To gra urodzinowa, nie audyt. |
 | Zgubiony link startowy | Link zawsze w panelu admina; `PLAYER_TOKEN` rotowalny przez `deploy.sh --set-secret PLAYER_TOKEN`. |
 | Prisma 7 w standalone | Osobny stage `prisma-cli`, kopiowanie `prisma/` + `prisma.config.ts`; fallback `prisma.config.mjs`. |
@@ -245,7 +242,6 @@ tryb "zdmuchiwane", wielu graczy, S3, e-mail, PWA, i18n, Prisma 8, CI/CD.
 
 ## 13. Checklista Dawida przed urodzinami
 
-1. (Opcjonalnie) bot Telegram: @BotFather → token; @userinfobot → chat_id; podać przy pierwszym deployu.
-2. `bash scripts/deploy.sh`; odczytać `ADMIN_PASSWORD` i link startowy z panelu.
-3. Test z telefonu: wejść linkiem, zgłosić zadanie 1 ze zdjęciem, zatwierdzić z Telegrama, potem "Resetuj postęp".
-4. Uzupełnić `src/config/site.ts` (imię, wiek, nagroda, od kogo, data) i wydrukować kody z panelu.
+1. `bash scripts/deploy.sh`; odczytać `ADMIN_PASSWORD` i link startowy z panelu.
+2. Test z telefonu: wejść linkiem, zgłosić zadanie 1 ze zdjęciem, zatwierdzić w `/admin`, potem "Resetuj postęp".
+3. Uzupełnić `src/config/site.ts` (imię, wiek, nagroda, od kogo, data) i wydrukować kody z panelu.
