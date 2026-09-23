@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Wersja E – desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif;background:#f4ecdc;color:#141210}
+a{color:#c81e5a}a:hover{color:#9c1546}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1180px; box-sizing: border-box; position: relative; overflow: hidden; background: #f4ecdc; display: flex; flex-direction: column; padding: 0 72px 48px 72px">
+
+  <!-- top bar -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 28px; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase">
+    <span>23.09 · Birthday Run</span>
+    <span style="color: #c81e5a">Tort trzeba wybiegać</span>
+  </div>
+
+  <!-- two columns -->
+  <div style="display: grid; grid-template-columns: 520px minmax(0, 1fr); gap: 72px; padding-top: 48px; flex-grow: 1">
+
+    <!-- LEFT: cake + hero + gift -->
+    <div style="display: flex; flex-direction: column; gap: 32px">
+
+      <!-- cake -->
+      <div style="display: flex; flex-direction: column; align-items: center">
+        <div style="display: flex; gap: 22px; align-items: flex-end; height: 96px">
+          <sc-for list="{{candles}}" as="c" hint-placeholder-count="6">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+              <sc-if value="{{c.lit}}" hint-placeholder-val="{{ true }}">
+                <span style="width: 18px; height: 28px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: #ffd23f; border: 2px solid #141210; box-sizing: border-box; box-shadow: 0 0 0 5px rgba(255,210,63,0.35), 0 0 20px rgba(255,150,30,0.6)" aria-hidden="true"></span>
+              </sc-if>
+              <sc-if value="{{c.unlit}}" hint-placeholder-val="{{ false }}">
+                <span style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 18px; height: 28px" aria-hidden="true"><span style="width: 10px; height: 10px; border-radius: 999px; border: 2px dashed #a39c8c; box-sizing: border-box"></span></span>
+              </sc-if>
+              <span style="width: 3px; height: 10px; background: #141210" aria-hidden="true"></span>
+              <span style="width: 20px; height: 48px; border: 2px solid #141210; box-sizing: border-box; border-radius: 3px; background: repeating-linear-gradient(-45deg, #ffffff 0 6px, #c81e5a 6px 12px)" aria-hidden="true"></span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="width: 320px; height: 52px; border: 3px solid #141210; border-radius: 14px 14px 6px 6px; background: #ffd23f; margin-top: -3px; box-sizing: border-box"></div>
+        <div style="width: 400px; height: 84px; border: 3px solid #141210; border-top: 0; border-radius: 0 0 6px 6px; background: #c81e5a; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-family: Anton, Impact, sans-serif; font-size: 60px; letter-spacing: 4px; color: #f4ecdc">[WIEK]</div>
+        <div style="width: 480px; height: 64px; border: 3px solid #141210; border-top: 0; border-radius: 0 0 8px 8px; background: #ffffff; box-sizing: border-box; background-image: repeating-linear-gradient(90deg, #141210 0 3px, transparent 3px 26px); background-size: 100% 14px; background-repeat: no-repeat; background-position: 0 100%"></div>
+        <div style="width: 480px; height: 14px; border: 3px solid #141210; border-top: 0; border-radius: 0 0 10px 10px; background: #141210; box-shadow: 8px 8px 0 #141210; box-sizing: border-box"></div>
+        <div style="margin-top: 26px; padding: 8px 18px; border: 2px solid #141210; border-radius: 999px; background: #ffffff; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase">{{candleLabel}}</div>
+      </div>
+
+      <!-- hero -->
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <h1 style="margin: 0; font-family: Anton, Impact, sans-serif; font-size: 68px; line-height: 0.96; letter-spacing: 1px; text-transform: uppercase">Sto lat, <span style="color: #c81e5a">[IMIĘ]</span>!<br>Zanim zdmuchniesz…</h1>
+        <p style="margin: 0; font-size: 17px; line-height: 1.55; color: #4a453c; max-width: 480px">Masz {{total}} kopert z zadaniami. Każda otwiera się dopiero po zaliczeniu poprzedniej. Gdy tort będzie gotowy, rozpakujesz prezent.</p>
+      </div>
+
+      <!-- gift -->
+      <div>
+        <sc-if value="{{allDone}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; align-items: center; gap: 24px; padding: 28px; border: 3px solid #141210; border-radius: 16px; background: #ffd23f; box-shadow: 8px 8px 0 #141210">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#141210" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>
+            <div style="display: flex; flex-direction: column; gap: 6px; flex-grow: 1">
+              <div style="font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase">Tort gotowy · prezent rozpakowany</div>
+              <div style="font-family: Anton, Impact, sans-serif; font-size: 44px; line-height: 1">[NAGRODA GŁÓWNA]</div>
+              <div style="font-size: 15px; line-height: 1.5; color: #4a453c">[Krótki opis nagrody lub gdzie ją odebrać]</div>
+            </div>
+            <button onClick="{{reset}}" style="height: 44px; padding: 0 18px; border: 2px solid #141210; border-radius: 10px; background: transparent; color: #141210; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; flex-shrink: 0">Od nowa</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{notAllDone}}" hint-placeholder-val="{{ true }}">
+          <div style="position: relative; display: flex; align-items: center; gap: 20px; padding: 24px; border: 3px solid #141210; border-radius: 16px; background: #ffffff; overflow: hidden">
+            <div aria-hidden="true" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 16px; margin-left: -8px; background: #c81e5a; border-left: 2px solid #141210; border-right: 2px solid #141210"></div>
+            <div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 50%; height: 16px; margin-top: -8px; background: #c81e5a; border-top: 2px solid #141210; border-bottom: 2px solid #141210"></div>
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 999px; background: #f4ecdc; border: 3px solid #141210; color: #141210; flex-shrink: 0; position: relative">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            </span>
+            <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1; position: relative; background: #ffffff; padding: 8px 10px; border-radius: 8px">
+              <span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #c81e5a">Prezent główny</span>
+              <span style="font-family: Anton, Impact, sans-serif; font-size: 30px; line-height: 1">Jeszcze {{leftCount}} koperty</span>
+              <span style="font-size: 14px; color: #6b655a">Wstążka puści, gdy tort będzie gotowy.</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="font-size: 13px; font-weight: 500; color: #6b655a">Z miłością i lekkim sadyzmem — [OD KOGO]</div>
+    </div>
+
+    <!-- RIGHT: envelopes -->
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 6px; border-bottom: 3px solid #141210">
+        <span style="font-family: Anton, Impact, sans-serif; font-size: 28px; letter-spacing: 1px; text-transform: uppercase">Koperty</span>
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #6b655a">{{doneCount}} / {{total}} zaliczone</span>
+      </div>
+
+      <sc-for list="{{items}}" as="item" hint-placeholder-count="6">
+
+        <sc-if value="{{item.isDone}}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; align-items: center; gap: 16px; padding: 14px 18px; border: 3px solid #141210; border-radius: 12px; background: #ffffff">
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 999px; background: #141210; color: #ffd23f; flex-shrink: 0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>
+            </span>
+            <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0">
+              <span style="font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #6b655a">Koperta {{item.n}} · zaliczona</span>
+              <span style="font-family: Anton, Impact, sans-serif; font-size: 24px; line-height: 1.05; color: #6b655a; text-decoration: line-through; text-decoration-color: #c81e5a; text-decoration-thickness: 3px">{{item.title}}</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{item.isActive}}" hint-placeholder-val="{{ false }}">
+          <div style="position: relative; display: flex; flex-direction: column; gap: 12px; padding: 22px 24px; border: 3px solid #141210; border-radius: 14px; background: #ffffff; box-shadow: 8px 8px 0 #c81e5a">
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <span style="padding: 4px 12px; border-radius: 999px; background: #ffd23f; border: 2px solid #141210; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase">Koperta {{item.n}} · otwarta</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#141210" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 5v14"/><path d="M18 5v14"/><path d="M3 8v8"/><path d="M21 8v8"/><path d="M6 12h12"/></svg>
+            </div>
+            <div style="font-family: Anton, Impact, sans-serif; font-size: 40px; line-height: 1; letter-spacing: 1px">{{item.title}}</div>
+            <div style="font-size: 16px; line-height: 1.5; color: #4a453c">{{item.desc}}</div>
+            <button onClick="{{item.complete}}" style="height: 52px; align-self: flex-start; padding: 0 28px; border: 3px solid #141210; border-radius: 10px; background: #141210; color: #ffd23f; font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase">{{buttonLabel}}</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{item.isLocked}}" hint-placeholder-val="{{ false }}">
+          <div style="position: relative; display: flex; align-items: center; gap: 16px; padding: 14px 18px; border: 3px dashed #a39c8c; border-radius: 12px; background: #ede3cf; overflow: hidden">
+            <div aria-hidden="true" style="position: absolute; top: -40px; left: 0; right: 0; height: 80px; background: #e2d6be; clip-path: polygon(0 0, 100% 0, 50% 100%)"></div>
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 999px; background: #c81e5a; border: 3px solid #141210; color: #ffffff; flex-shrink: 0; position: relative">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            </span>
+            <div style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; position: relative">
+              <span style="font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #6b655a">Koperta {{item.n}} · zaklejona</span>
+              <span style="font-family: Anton, Impact, sans-serif; font-size: 22px; letter-spacing: 3px; color: #a39c8c">??? ??? ???</span>
+            </div>
+          </div>
+        </sc-if>
+
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"candleMode":{"editor":"enum","default":"zapalane","options":["zapalane","zdmuchiwane"]},"startDone":{"editor":"int","default":2,"min":0,"max":6},"$preview":{"width":1280,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { done: null };
+  }
+  tasks() {
+    return [
+      { title: 'Poranny bieg 5 km', desc: 'Przed śniadaniem. Tempo dowolne, ale bez zatrzymywania się.' },
+      { title: '100 pompek w ciągu dnia', desc: 'W dowolnych seriach. Liczy się suma do północy.' },
+      { title: 'Trening nóg na siłowni', desc: 'Przysiad, wykroki, wypychanie. Minimum 45 minut.' },
+      { title: 'Interwały 8 × 400 m', desc: 'Na bieżni albo na stadionie. Przerwa 90 sekund.' },
+      { title: 'Nowy rekord na ławce', desc: 'Choćby o 1 kg. Zdjęcie z talerzami jako dowód.' },
+      { title: '10 km na urodziny', desc: 'Kilometr za każdą dekadę i coś ekstra. Trasa dowolna.' }
+    ];
+  }
+  renderVals() {
+    const tasks = this.tasks();
+    const total = tasks.length;
+    const lighting = (this.props.candleMode ?? 'zapalane') === 'zapalane';
+    const start = this.props.startDone ?? 2;
+    const done = Math.min(this.state.done === null ? start : this.state.done, total);
+    const items = tasks.map((t, i) => ({
+      ...t, n: i + 1,
+      isDone: i < done, isActive: i === done, isLocked: i > done,
+      complete: () => this.setState({ done: Math.min(done + 1, total) })
+    }));
+    const candles = tasks.map((t, i) => {
+      const lit = lighting ? i < done : i >= done;
+      return { lit: lit, unlit: !lit };
+    });
+    return {
+      items, candles, total, doneCount: done, leftCount: total - done,
+      candleLabel: lighting ? 'Zapalone: ' + done + ' / ' + total : 'Zostało do zdmuchnięcia: ' + (total - done),
+      buttonLabel: lighting ? 'Zrobione — zapal świeczkę' : 'Zrobione — zdmuchnij świeczkę',
+      allDone: done >= total, notAllDone: done < total,
+      reset: () => this.setState({ done: 0 })
+    };
+  }
+}
+</script>
+</body>
+</html>
