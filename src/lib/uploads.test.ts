@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, rm, writeFile, stat } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, writeFile, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { MAX_BYTES, UploadError, openUpload, saveUpload } from "./uploads";
@@ -55,6 +55,43 @@ describe("saveUpload", () => {
     expect(res.path.endsWith(ext)).toBe(true);
   });
 
+  it("pusty type + bajty HEIC → typ z sygnatury (.heic)", async () => {
+    const res = await saveUpload(new File([HEIC], "IMG_0001", { type: "" }), dir);
+    expect(res.path).toMatch(/^[0-9a-f-]{36}\.heic$/);
+  });
+
+  it("pusty type + HTML → type", async () => {
+    await expectUploadError(saveUpload(new File(["<html></html>"], "x", { type: "" }), dir), "type");
+  });
+
+  it("image/heif + bajty HEIC → akceptuje jako .heic", async () => {
+    const res = await saveUpload(new File([HEIC], "IMG.HEIF", { type: "image/heif" }), dir);
+    expect(res.path).toMatch(/^[0-9a-f-]{36}\.heic$/);
+  });
+
+  it("po odrzuceniu (type/size) katalog pozostaje pusty", async () => {
+    await expectUploadError(saveUpload(new File([PNG], "a.jpg", { type: "image/jpeg" }), dir), "type");
+    await expectUploadError(saveUpload(new File(["hej"], "a.txt", { type: "text/plain" }), dir), "type");
+    const big = new Uint8Array(MAX_BYTES + 1);
+    big.set(JPEG);
+    await expectUploadError(saveUpload(new File([big], "big.jpg", { type: "image/jpeg" }), dir), "size");
+    expect(await readdir(dir)).toEqual([]);
+  });
+
+  it("twardy limit w pętli: plik kłamiący o size → size", async () => {
+    class LyingFile extends File {
+      get size() {
+        return 1;
+      }
+    }
+    const big = new Uint8Array(11 * 1024 * 1024);
+    big.set(JPEG);
+    const lying = new LyingFile([big], "big.jpg", { type: "image/jpeg" });
+    expect(lying.size).toBe(1);
+    await expectUploadError(saveUpload(lying, dir), "size");
+    expect(await readdir(dir)).toEqual([]);
+  });
+
   it("odrzuca text/plain jako typ", async () => {
     await expectUploadError(saveUpload(new File(["hej"], "a.txt", { type: "text/plain" }), dir), "type");
   });
@@ -81,6 +118,7 @@ describe("openUpload", () => {
     const res = await openUpload(path, dir);
     expect(res).not.toBeNull();
     expect(res!.contentType).toBe("image/jpeg");
+    expect(res!.size).toBe(JPEG.byteLength);
     const body = new Uint8Array(await new Response(res!.stream).arrayBuffer());
     expect(body).toEqual(JPEG);
   });
