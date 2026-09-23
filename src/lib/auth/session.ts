@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 
 // Podpisane wartości cookie: `payload.sig`, sig = HMAC-SHA256(secret, payload) w base64url bez paddingu.
 // Odpowiednik dla proxy (Web Crypto): ./session-web.ts — format musi pozostać identyczny.
@@ -19,9 +19,9 @@ export function verifyValue(token: string, secret: string): string | null {
   return safeEqual(sig, sign(payload, secret)) ? payload : null;
 }
 
+// Porównanie skrótów SHA-256 (stała długość) — nie ujawnia długości sekretu przez wczesne wyjście.
 export function safeEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(a, "utf8");
-  const bufB = Buffer.from(b, "utf8");
-  if (bufA.length !== bufB.length) return false;
-  return timingSafeEqual(bufA, bufB);
+  const hashA = createHash("sha256").update(a, "utf8").digest();
+  const hashB = createHash("sha256").update(b, "utf8").digest();
+  return timingSafeEqual(hashA, hashB);
 }

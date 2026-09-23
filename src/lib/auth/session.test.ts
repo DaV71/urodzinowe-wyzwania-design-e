@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { signValue, verifyValue, safeEqual } from "./session";
-import { verifyValueWeb, isValidSessionPayload, DAY_MS } from "./session-web";
+import { verifyValueWeb, isValidSessionPayload, DAY_MS, PLAYER_COOKIE, ADMIN_COOKIE } from "./session-web";
 
 const secret = "s".repeat(40);
 
@@ -61,4 +61,30 @@ describe("isValidSessionPayload", () => {
   });
   it("odrzuca datę wystawienia z przyszłości", () =>
     expect(isValidSessionPayload(`player:${now + DAY_MS}`, "player", 120 * DAY_MS, now)).toBe(false));
+});
+
+describe("zniekształcone tokeny", () => {
+  const malformed = [".sig", "payload.", "a.b.c"];
+  it("verifyValue → null", () => {
+    for (const t of malformed) expect(verifyValue(t, secret)).toBeNull();
+  });
+  it("verifyValueWeb → null", async () => {
+    for (const t of malformed) expect(await verifyValueWeb(t, secret)).toBeNull();
+  });
+});
+
+describe("safeEqual bez wczesnego wyjścia", () => {
+  it("prefiks i dłuższy ciąg → false w obie strony", () => {
+    expect(safeEqual("haslo", "haslo-dluzsze")).toBe(false);
+    expect(safeEqual("haslo-dluzsze", "haslo")).toBe(false);
+    expect(safeEqual("", "x")).toBe(false);
+    expect(safeEqual("", "")).toBe(true);
+  });
+});
+
+describe("nazwy cookie", () => {
+  it("są wspólne w session-web", () => {
+    expect(PLAYER_COOKIE).toBe("bd_player");
+    expect(ADMIN_COOKIE).toBe("bd_admin");
+  });
 });

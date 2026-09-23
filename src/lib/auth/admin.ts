@@ -2,9 +2,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getEnv } from "@/lib/env";
 import { signValue, verifyValue } from "./session";
-import { DAY_MS, isValidSessionPayload } from "./session-web";
+import { ADMIN_COOKIE, DAY_MS, isValidSessionPayload } from "./session-web";
 
-export const ADMIN_COOKIE = "bd_admin";
+export { ADMIN_COOKIE };
 export const ADMIN_MAX_AGE_DAYS = 30;
 
 export async function isAdmin(): Promise<boolean> {

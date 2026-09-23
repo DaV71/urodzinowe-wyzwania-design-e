@@ -1,6 +1,9 @@
 // Weryfikacja podpisu cookie przez Web Crypto (bez node:crypto) — używana w src/proxy.ts.
 // Format zgodny z ./session.ts: `payload.sig`, sig = HMAC-SHA256 base64url bez paddingu.
 
+export const PLAYER_COOKIE = "bd_player";
+export const ADMIN_COOKIE = "bd_admin";
+
 const encoder = new TextEncoder();
 
 function toBase64Url(bytes: Uint8Array): string {

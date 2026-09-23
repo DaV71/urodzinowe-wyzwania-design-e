@@ -1,9 +1,9 @@
 import { cookies } from "next/headers";
 import { getEnv } from "@/lib/env";
 import { signValue, verifyValue } from "./session";
-import { DAY_MS, isValidSessionPayload } from "./session-web";
+import { DAY_MS, PLAYER_COOKIE, isValidSessionPayload } from "./session-web";
 
-export const PLAYER_COOKIE = "bd_player";
+export { PLAYER_COOKIE };
 export const PLAYER_MAX_AGE_DAYS = 120;
 
 export async function isPlayer(): Promise<boolean> {
