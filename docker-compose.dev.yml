@@ -2,12 +2,11 @@
 services:
   db:
     image: postgres:16
-    restart: unless-stopped
     environment:
       POSTGRES_USER: urodzinowe
       POSTGRES_PASSWORD: urodzinowe
       POSTGRES_DB: urodzinowe
-    ports: ["127.0.0.1:5432:5432"]
+    ports: ["127.0.0.1:${DEV_DB_PORT:-5432}:5432"]
     volumes:
       - dbdata_dev:/var/lib/postgresql/data
     healthcheck:
