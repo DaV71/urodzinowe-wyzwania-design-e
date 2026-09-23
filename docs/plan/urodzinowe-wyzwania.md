@@ -385,13 +385,13 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   `codes.ts`: `codeForTask(secret, taskId)`, `verifyCode(secret, taskId, input)`, `allCodes(secret)`.
   `audit.ts`: `audit(actor, action, taskId?, meta?)`. Dodatkowo `countPending(): Promise<number>` (liczba zadań `PENDING_REVIEW`) do tytułu strony admina.
 
-- [ ] **Krok 1: Test `codes` (failing)**: deterministyczne; różne taskId → różne; format `/^[A-Z2-9]{4}-[A-Z2-9]{4}$/`;
+- [x] **Krok 1: Test `codes` (failing)**: deterministyczne; różne taskId → różne; format `/^[A-Z2-9]{4}-[A-Z2-9]{4}$/`;
   `verifyCode` akceptuje `"abcd efgh"`, `"ABCD-EFGH"`, odrzuca zły; inny sekret → inny kod. Implementacja: HMAC-SHA256 → alfabet
   `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`, 8 znaków z pierwszych 40 bitów.
-- [ ] **Krok 2: Test `computeWarnings` (failing)**: każdy komunikat osobno + brak ostrzeżeń dla poprawnego zgłoszenia; zad. 11 z
+- [x] **Krok 2: Test `computeWarnings` (failing)**: każdy komunikat osobno + brak ostrzeżeń dla poprawnego zgłoszenia; zad. 11 z
   `reference 760` i `durationS 740` → ostrzeżenie; `720` → brak.
-- [ ] **Krok 3: `tests/integration/setup.ts`** — `truncateAll()` (`TaskProgress, Submission, CodeAttempt, AuditLog`), seed gdy `Task` pusty.
-- [ ] **Krok 4: Testy integracyjne `progress` (failing)**, każdy po `truncateAll()`:
+- [x] **Krok 3: `tests/integration/setup.ts`** — `truncateAll()` (`TaskProgress, Submission, CodeAttempt, AuditLog`), seed gdy `Task` pusty.
+- [x] **Krok 4: Testy integracyjne `progress` (failing)**, każdy po `truncateAll()`:
   1. `ensureStarted`: 28 wierszy, 1 ACTIVE z `unlockedAt`, reszta LOCKED; idempotentne.
   2. `getBoard()`: `done 0`; `tasks[0].title` zdefiniowany, `tasks[1].title` undefined; `revealLocked` ujawnia.
   3. `submit(1, {photos:[{path,hash}]})` → ok, 1 PENDING_REVIEW, Submission PENDING; `getBoard().tasks[0].pending.photos` = 1.
@@ -405,8 +405,8 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   11. `resetAll()` → jak po `ensureStarted`, Submission/CodeAttempt puste, AuditLog ma `reset`.
   12. Zaliczenie 28 → `done 28`, brak ACTIVE; AuditLog ma wpis `all_done`.
   13. `countPending()` → 0 na starcie, 1 po `submit(1, …)`, 0 po `approve(1)`.
-- [ ] **Krok 5: Implementacja `progress.ts`** — mutacje w `prisma.$transaction`, `audit(...)` przy każdej. Unlock: `taskId+1 ≤ 28` → ACTIVE + `unlockedAt`.
-- [ ] **Krok 6: PASS** `npm run db:up && npx vitest run tests/integration src/lib`. **Commit** `claude: T4 — maszyna stanów, zgłoszenia, kody, audyt`.
+- [x] **Krok 5: Implementacja `progress.ts`** — mutacje w `prisma.$transaction`, `audit(...)` przy każdej. Unlock: `taskId+1 ≤ 28` → ACTIVE + `unlockedAt`.
+- [x] **Krok 6: PASS** `npm run db:up && npx vitest run tests/integration src/lib`. **Commit** `claude: T4 — maszyna stanów, zgłoszenia, kody, audyt`.
 
 ---
 
