@@ -48,10 +48,11 @@ if [ ! -f "$LIB" ]; then
   echo "BŁĄD: brak $LIB" >&2
   exit 1
 fi
-# shellcheck source=../scripts/lib/deploy-lib.sh
+# shellcheck source=scripts/lib/deploy-lib.sh
 source "$LIB"
 
 # Kompletna konfiguracja testowa (każdy test w podpowłoce może ją nadpisać).
+# shellcheck disable=SC2034 # zmienne czytane przez funkcje biblioteki
 set_test_config() {
   SERVER_HOST=203.0.113.10
   SSH_USER=deploy
@@ -154,6 +155,7 @@ assert_eq "set-secret: POSTGRES_PASSWORD bez zmian" "$(env_value "$work/.env" PO
 assert_eq "set-secret: brak plików tymczasowych" "$(find "$work" -name '.env.*' | wc -l | tr -d ' ')" "0"
 
 echo "4. gen_remote_bootstrap_script"
+# shellcheck disable=SC2119 # bez rotacji sekretów — celowo bez argumentów
 boot=$(set_test_config && validate_config && gen_remote_bootstrap_script)
 assert_bash_syntax "bootstrap: bash -n" "$boot"
 assert_contains "bootstrap: set -euo pipefail" "$boot" "set -euo pipefail"

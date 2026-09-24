@@ -570,7 +570,7 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   `gen_remote_env_script APP_DOMAIN [KEY=VALUE…]`, `gen_remote_secret_probe_script KEY…`, `gen_remote_up_script`,
   `gen_remote_bootstrap_script`, `wait_for_url URL DEADLINE_S INTERVAL_S`. `deploy.sh`: `--dry-run`, `--config`, `--set-secret KEY`, `--no-wait`.
 
-- [ ] **Krok 1: `tests/deploy-lib.test.sh` (failing)** — własne `assert_contains/assert_not_contains/assert_fails`:
+- [x] **Krok 1: `tests/deploy-lib.test.sh` (failing)** — własne `assert_contains/assert_not_contains/assert_fails`:
   1. `validate_config` bez `SERVER_HOST` → die; komplet → `SSH_PORT=22`, `REPO_BRANCH=main`, `DEPLOY_DIR=urodzinowe`.
   2. `inject_git_token` → URL z tokenem; `gen_remote_code_script` zawiera `git remote set-url origin` bez tokenu.
   3. `gen_remote_env_script app.example.pl` zawiera `chmod 600 .env`, `env_set APP_DOMAIN`, `env_set_if_missing` dla
@@ -579,15 +579,15 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   4. `gen_remote_bootstrap_script` przechodzi `bash -n`; zawiera `docker network create web` i `up -d --build`; nie zawiera `prisma migrate`.
   5. `bash scripts/deploy.sh --dry-run --config tests/fixtures/deploy.conf` → exit 0, zawiera `set -euo pipefail` i `app.example.pl`, nie zawiera `ssh `.
   6. `gen_remote_secret_probe_script ADMIN_PASSWORD` zawiera `grep -q '^ADMIN_PASSWORD=' .env || echo ADMIN_PASSWORD` (używane przez `--set-secret` do potwierdzenia rotacji).
-- [ ] **Krok 2: `deploy-lib.sh`** wg `demo-deploy.md` §4 i SPEC §10; `env_set` przez `awk` do pliku tymczasowego;
+- [x] **Krok 2: `deploy-lib.sh`** wg `demo-deploy.md` §4 i SPEC §10; `env_set` przez `awk` do pliku tymczasowego;
   `gen_secret(){ head -c 48 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 40; }`; po `.env` skrypt zdalny wypisuje
   "ADMIN_PASSWORD i PLAYER_TOKEN: `grep -E '^(ADMIN_PASSWORD|PLAYER_TOKEN)=' ~/urodzinowe/.env`".
-- [ ] **Krok 3: `deploy.sh`** — parsowanie → `load_config` → `validate_config` → dry-run (placeholdery, stdout, exit 0) → probe brakujących
+- [x] **Krok 3: `deploy.sh`** — parsowanie → `load_config` → `validate_config` → dry-run (placeholdery, stdout, exit 0) → probe brakujących
   (`--set-secret KEY`: wartość z lokalnego env lub `read -rs`, przekazana do `gen_remote_env_script` jako `KEY=VALUE`; zwykły deploy
   nie prompt-uje o nic) → `gen_remote_bootstrap_script | ssh … 'bash -s'` → `wait_for_url "https://$APP_DOMAIN/api/health" 180 5` →
   wypisz `https://$APP_DOMAIN/admin` i przypomnienie, jak odczytać `ADMIN_PASSWORD`.
-- [ ] **Krok 4: `deploy.conf.example`** — klucze z `demo-deploy.md` + `DEPLOY_DIR=urodzinowe`, `HEALTH_TIMEOUT=180`.
-- [ ] **Krok 5: PASS** `bash tests/deploy-lib.test.sh` (+ `shellcheck` jeśli jest). **Commit** `claude: T10 — skrypty deployu z testami`.
+- [x] **Krok 4: `deploy.conf.example`** — klucze z `demo-deploy.md` + `DEPLOY_DIR=urodzinowe`, `HEALTH_TIMEOUT=180`.
+- [x] **Krok 5: PASS** `bash tests/deploy-lib.test.sh` (+ `shellcheck` jeśli jest). **Commit** `claude: T10 — skrypty deployu z testami`.
 
 ---
 

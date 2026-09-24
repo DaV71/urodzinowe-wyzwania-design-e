@@ -1,0 +1,22 @@
+# Konfiguracja deployu (demo-deploy.md §3). Skopiuj do deploy.conf (ignorowany przez git) i uzupełnij:
+#   cp deploy.conf.example deploy.conf && bash scripts/deploy.sh --dry-run
+# Sekrety (POSTGRES_PASSWORD, AUTH_SECRET, CODES_SECRET, PLAYER_TOKEN, ADMIN_PASSWORD) NIE są tutaj —
+# losuje je deploy na serwerze i zachowuje między wdrożeniami. Rotacja: bash scripts/deploy.sh --set-secret KLUCZ.
+
+# --- Serwer / SSH ---
+SERVER_HOST=203.0.113.5     # IP lub host VPS
+SSH_USER=root               # root albo user z sudo bez hasła
+SSH_PORT=22                 # opcjonalnie (domyślnie 22)
+SSH_KEY=                    # opcjonalnie: ścieżka do klucza (puste = domyślny ~/.ssh)
+
+# --- Domena apki ---
+APP_DOMAIN=urodziny.twojadomena.pl   # subdomena objęta certem wgranym do proxy
+
+# --- Repozytorium ---
+REPO_URL=https://github.com/uzytkownik/urodzinowe-wyzwania.git
+REPO_BRANCH=main            # opcjonalnie (domyślnie main)
+DEPLOY_DIR=urodzinowe       # opcjonalnie: katalog na serwerze (względem $HOME)
+GIT_TOKEN=                  # opcjonalnie: token TYLKO dla prywatnego repo
+
+# --- Czekanie na start ---
+HEALTH_TIMEOUT=180          # opcjonalnie: ile sekund czekać na https://$APP_DOMAIN/api/health
