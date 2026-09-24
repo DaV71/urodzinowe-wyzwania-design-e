@@ -70,16 +70,7 @@ fi
 
 require_cmd ssh curl
 
-SSH_CMD=(ssh -p "$SSH_PORT" -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new)
-SSH_HINT="ssh -p $SSH_PORT"
-if [ -n "$SSH_KEY" ]; then
-  SSH_KEY=${SSH_KEY/#\~/$HOME}
-  [ -f "$SSH_KEY" ] || die "SSH_KEY wskazuje na nieistniejący plik: $SSH_KEY"
-  SSH_CMD+=(-i "$SSH_KEY")
-  SSH_HINT+=" -i $SSH_KEY"
-fi
-SSH_CMD+=("$SSH_USER@$SERVER_HOST")
-SSH_HINT+=" $SSH_USER@$SERVER_HOST"
+build_ssh_cmd
 
 # --- --set-secret: wartość z lokalnego env (np. PLAYER_TOKEN=… bash scripts/deploy.sh …) albo wpisana ukryta ---
 pairs=()

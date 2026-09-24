@@ -92,6 +92,21 @@ validate_config() {
   [[ $HEALTH_TIMEOUT =~ ^[0-9]+$ ]] || die "HEALTH_TIMEOUT musi być liczbą sekund: $HEALTH_TIMEOUT"
 }
 
+# build_ssh_cmd — ustawia tablicę SSH_CMD (ssh … user@host) i napis SSH_HINT (do komunikatów dla człowieka).
+# Wywoływać po validate_config. `~` w SSH_KEY rozwijane do $HOME; nieistniejący plik klucza → die.
+build_ssh_cmd() {
+  SSH_CMD=(ssh -p "$SSH_PORT" -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new)
+  SSH_HINT="ssh -p $SSH_PORT"
+  if [ -n "${SSH_KEY:-}" ]; then
+    SSH_KEY=${SSH_KEY/#\~/$HOME}
+    [ -f "$SSH_KEY" ] || die "SSH_KEY wskazuje na nieistniejący plik: $SSH_KEY"
+    SSH_CMD+=(-i "$SSH_KEY")
+    SSH_HINT+=" -i $SSH_KEY"
+  fi
+  SSH_CMD+=("$SSH_USER@$SERVER_HOST")
+  SSH_HINT+=" $SSH_USER@$SERVER_HOST"
+}
+
 # inject_git_token URL TOKEN — URL https z tokenem. Skrypt zdalny go już nie używa (token idzie nagłówkiem
 # http.extraHeader przez GIT_CONFIG_*, więc nie ma go w URL, argv ani .git/config); zostaje jako funkcja interfejsu.
 inject_git_token() {
