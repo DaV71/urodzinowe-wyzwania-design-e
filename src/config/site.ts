@@ -1,11 +1,11 @@
 // Dane personalizujące — Dawid uzupełnia przed urodzinami.
 export const site = {
-  name: "[IMIĘ]",
+  name: "Sylwia",
   age: 28,
-  rewardTitle: "[NAGRODA GŁÓWNA]",
-  rewardDescription: "[Krótki opis nagrody lub gdzie ją odebrać]",
-  from: "[OD KOGO]",
-  dateLabel: "23.09 · Birthday Run",
+  rewardTitle: "Wyjazd niespodzianka",
+  rewardDescription: "Ustalmy razem termin, a wtedy dowiesz się co powinnaś spakować",
+  from: "Dawid",
+  dateLabel: "25.09 · Sportowe urodziny",
   stages: ["Rozruch", "Budowanie nawyku", "Wytrzymałość", "Prosta do finału"] as const,
   totalTasks: 28,
 };

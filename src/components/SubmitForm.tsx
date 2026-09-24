@@ -57,7 +57,7 @@ export function SubmitForm({ taskId, proof, proofHint, askDistance, askDuration,
     if (localError) setLocalError(null);
     return state && "ok" in state ? (
       <p role="status" className={styles.success}>
-        Wysłane! Dawid dostał znać.
+        Wysłane! Dawid dostał zgłoszenie.
       </p>
     ) : null;
   }
