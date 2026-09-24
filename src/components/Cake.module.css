@@ -1,30 +1,47 @@
 /*
- * Wymiary i promienie mobile wyrażone w jednostce --u (1px); obramowania i knot w stałych px.
- * Poniżej 390 px szerokości viewportu --u maleje
- * proporcjonalnie, więc cały tort (350 px) skaluje się do (100vw - 40px) bez transform
- * i bez pustej przestrzeni pod spodem. Desktop (≥ 1024 px) ma własne wartości w px.
+ * Tort schodkowy: trzy warstwy coraz szersze ku dołowi, świeczki na wierzchu i na półkach.
+ * Wymiary mobile w jednostce --u = min(1px, szerokość kontenera / 350), więc tort (350 px)
+ * zawsze mieści się w kolumnie — także przy pasku przewijania. Obramowania w stałych px.
+ * Desktop (≥ 1024 px) ma własne wartości w px.
+ *
+ * Szerokości warstw (M / D): wierzch 150 / 210, środek 250 / 350, dół 334 / 480, patera 350 / 504.
  */
+.frame {
+  container-type: inline-size;
+  width: 100%;
+}
+
 .cake {
-  --u: 1px;
+  --u: min(1px, 100cqi / 350);
+  --top-w: calc(150 * var(--u));
+  --mid-w: calc(250 * var(--u));
+  --bot-w: calc(334 * var(--u));
+  --plate-w: calc(350 * var(--u));
+  --candle-gap: calc(3 * var(--u));
+
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: calc(350 * var(--u));
+  width: var(--plate-w);
   max-width: 100%;
   margin-inline: auto;
 }
 
-@media (max-width: 389px) {
-  .cake {
-    --u: calc((100vw - 40px) / 350);
-  }
-}
+/* --- Świeczki --- */
 
-.candles {
+.candlesTop,
+.ledge {
   display: flex;
   align-items: flex-end;
-  gap: calc(4 * var(--u));
-  height: calc(56 * var(--u));
+  gap: var(--candle-gap);
+}
+
+.candlesTop {
+  justify-content: center;
+  width: var(--top-w);
+  margin-bottom: -2px; /* świeczki wbite w lukier */
+  position: relative;
+  z-index: 1;
 }
 
 .candle {
@@ -79,26 +96,71 @@
   background: repeating-linear-gradient(-45deg, #fff 0 4px, var(--accent) 4px 8px);
 }
 
-.layerTop {
+/* --- Poziomy: warstwa wyżej + półki niższej warstwy po bokach --- */
+
+.level {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.levelTop {
+  width: var(--mid-w);
+}
+
+.levelMiddle {
+  width: var(--bot-w);
+}
+
+/* Półka: świeczki stoją na górnej krawędzi warstwy poniżej, obok warstwy powyżej. */
+.ledge {
+  position: absolute;
+  bottom: -2px;
+  z-index: 1;
+}
+
+.levelTop .ledge {
+  width: calc((var(--mid-w) - var(--top-w)) / 2);
+}
+
+.levelMiddle .ledge {
+  width: calc((var(--bot-w) - var(--mid-w)) / 2);
+}
+
+.ledgeLeft {
+  left: 0;
+  justify-content: center;
+}
+
+.ledgeRight {
+  right: 0;
+  justify-content: center;
+}
+
+/* --- Warstwy --- */
+
+.layerTop,
+.layerMiddle,
+.layerBottom {
   box-sizing: border-box;
-  width: calc(240 * var(--u));
-  height: calc(42 * var(--u));
-  margin-top: -3px;
   border: 3px solid var(--ink);
-  border-radius: calc(12 * var(--u)) calc(12 * var(--u)) calc(6 * var(--u)) calc(6 * var(--u));
+}
+
+.layerTop {
+  width: var(--top-w);
+  height: calc(42 * var(--u));
+  border-radius: calc(12 * var(--u)) calc(12 * var(--u)) 0 0;
   background: var(--yellow);
 }
 
 .layerMiddle {
-  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: calc(300 * var(--u));
+  width: var(--mid-w);
   height: calc(62 * var(--u));
-  border: 3px solid var(--ink);
-  border-top: 0;
-  border-radius: 0 0 calc(6 * var(--u)) calc(6 * var(--u));
+  margin-top: -3px; /* wspólna krawędź z warstwą wyżej */
+  border-radius: calc(10 * var(--u)) calc(10 * var(--u)) 0 0;
   background: var(--accent);
   font-family: var(--font-display);
   font-size: calc(44 * var(--u));
@@ -106,43 +168,45 @@
   color: var(--bg);
 }
 
-.layerBottom {
-  box-sizing: border-box;
-  width: calc(350 * var(--u));
-  height: calc(50 * var(--u));
-  border: 3px solid var(--ink);
-  border-top: 0;
-  border-radius: 0 0 calc(8 * var(--u)) calc(8 * var(--u));
-  background-color: var(--card);
-  background-image: repeating-linear-gradient(
-    90deg,
-    var(--ink) 0 calc(3 * var(--u)),
-    transparent calc(3 * var(--u)) calc(22 * var(--u))
-  );
-  background-size: 100% calc(12 * var(--u));
-  background-repeat: no-repeat;
-  background-position: 0 100%;
+.levelTop + .levelMiddle {
+  margin-top: -3px;
 }
 
-.base {
+.levelMiddle .layerMiddle {
+  margin-top: 0;
+}
+
+.layerBottom {
+  width: var(--bot-w);
+  height: calc(50 * var(--u));
+  margin-top: -3px;
+  border-radius: calc(10 * var(--u)) calc(10 * var(--u)) 0 0;
+  background-color: var(--card);
+  /* Czarne „kropelki” spływające z górnej krawędzi. */
+  background-image: radial-gradient(circle at 50% 0, var(--ink) 5px, transparent 5.5px);
+  background-size: 22px 8px;
+  background-repeat: repeat-x;
+  background-position: 11px 0;
+}
+
+/* Patera: jedna czarna płyta, szersza od tortu. */
+.plate {
   box-sizing: border-box;
-  width: calc(350 * var(--u));
-  height: calc(12 * var(--u));
-  border: 3px solid var(--ink);
-  border-top: 0;
-  border-radius: 0 0 calc(10 * var(--u)) calc(10 * var(--u));
+  width: var(--plate-w);
+  height: calc(10 * var(--u));
+  margin-top: -3px;
+  border-radius: calc(5 * var(--u));
   background: var(--ink);
-  box-shadow: calc(6 * var(--u)) calc(6 * var(--u)) 0 var(--ink);
 }
 
 @media (min-width: 1024px) {
   .cake {
-    width: 480px;
-  }
-
-  .candles {
-    gap: 5px;
-    height: 72px;
+    --top-w: 210px;
+    --mid-w: 350px;
+    --bot-w: 480px;
+    --plate-w: 504px;
+    --candle-gap: 5px;
+    width: 504px;
   }
 
   .flameSlot {
@@ -156,29 +220,28 @@
   }
 
   .layerTop {
-    width: 320px;
     height: 52px;
-    border-radius: 14px 14px 6px 6px;
+    border-radius: 14px 14px 0 0;
   }
 
   .layerMiddle {
-    width: 400px;
     height: 84px;
+    border-radius: 12px 12px 0 0;
     font-size: 60px;
     letter-spacing: 4px;
   }
 
   .layerBottom {
-    width: 480px;
     height: 64px;
-    background-image: repeating-linear-gradient(90deg, var(--ink) 0 3px, transparent 3px 26px);
-    background-size: 100% 14px;
+    border-radius: 12px 12px 0 0;
+    background-image: radial-gradient(circle at 50% 0, var(--ink) 7px, transparent 7.5px);
+    background-size: 26px 10px;
+    background-position: 13px 0;
   }
 
-  .base {
-    width: 480px;
+  .plate {
     height: 14px;
-    box-shadow: 8px 8px 0 var(--ink);
+    border-radius: 7px;
   }
 }
 
