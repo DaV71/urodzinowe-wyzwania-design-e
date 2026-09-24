@@ -11,3 +11,7 @@ tests
 scripts
 *.md
 docker-compose.dev.yml
+.superpowers
+src/generated
+*.tsbuildinfo
+next-env.d.ts
