@@ -9,6 +9,8 @@
 # Wynik: backups/db-YYYYMMDD-HHMMSS.dump i backups/uploads-YYYYMMDD-HHMMSS.tgz. Pliki powstają w katalogu
 # tymczasowym i są przenoszone dopiero, gdy oba zrzuty się udały (brak pustych/uciętych kopii po błędzie).
 #
+# Uwaga: restore zastępuje całą bazę i wszystkie zdjęcia stanem z kopii. Postęp od jej wykonania przepada.
+# Przed restore zrób świeży `bash scripts/backup.sh`.
 # RESTORE (na serwerze, w ~/urodzinowe; `sudo docker`, jeśli użytkownik nie jest w grupie docker):
 #   scp -P <port> backups/db-<ts>.dump backups/uploads-<ts>.tgz <user>@<host>:/tmp/
 #   cd ~/urodzinowe
@@ -115,6 +117,8 @@ fi
 require_cmd ssh
 build_ssh_cmd
 
+# Kopie zawierają dane osobowe (zdjęcia, zgłoszenia) — pliki i katalogi tylko dla właściciela.
+umask 077
 TS=$(date +%Y%m%d-%H%M%S)
 mkdir -p "$OUT_DIR"
 WORK=$(mktemp -d "$OUT_DIR/.backup-$TS.XXXXXX")

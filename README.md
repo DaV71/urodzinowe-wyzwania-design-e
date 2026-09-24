@@ -65,7 +65,7 @@ bash scripts/deploy.sh                 # deploy albo redeploy (idempotentny), cz
 
 Przy pierwszym deployu serwer losuje sekrety (`POSTGRES_PASSWORD`, `AUTH_SECRET`, `CODES_SECRET`, `PLAYER_TOKEN`,
 `ADMIN_PASSWORD`) i zapisuje je w `~/urodzinowe/.env` (tryb 600). Kolejne deploye ich nie zmieniają. Deploy nie wypisuje
-sekretów, tylko pokazuje, jak je odczytać:
+sekretów, tylko pokazuje, jak je odczytać (dodaj `-p <port>` / `-i <klucz>`, jeśli używasz — deploy wypisuje gotową komendę):
 
 ```bash
 ssh <user>@<host> "grep -E '^(ADMIN_PASSWORD|PLAYER_TOKEN)=' ~/urodzinowe/.env"
@@ -107,8 +107,11 @@ bash scripts/backup.sh             # backups/db-<ts>.dump + backups/uploads-<ts>
 
 Skrypt korzysta z `deploy.conf` (lub `--config <plik>`). Bazę zrzuca przez `pg_dump -Fc` w kontenerze `db`, a zdjęcia
 pakuje z wolumenu `urodzinowe_uploads`. Pliki trafiają na dysk dopiero wtedy, gdy oba zrzuty się udały. Katalog `backups/` jest poza gitem.
-Komendy restore (`pg_restore --clean` do kontenera `db`, `tar xzf` do wolumenu) są w komentarzu na początku
-`scripts/backup.sh`.
+Pliki kopii są dostępne tylko dla właściciela (`umask 077`), bo zawierają dane osobowe.
+
+**Uwaga:** restore zastępuje całą bazę i wszystkie zdjęcia stanem z kopii. Postęp od jej wykonania przepada. Przed restore zrób
+świeży `bash scripts/backup.sh`. Komendy restore (`pg_restore --clean` do kontenera `db`, `tar xzf` do wolumenu) są w komentarzu
+na początku `scripts/backup.sh`.
 
 ## Testy
 

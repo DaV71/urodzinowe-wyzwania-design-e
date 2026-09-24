@@ -295,13 +295,14 @@ cat >"$bfake/ssh" <<EOF
 script=\$(cat)
 if [[ \$script == *pg_dump* ]]; then
   [ "\${FAKE_EMPTY_DUMP:-0}" = 1 ] && exit 0
+  if [ "\${FAKE_FAIL_DUMP:-0}" = 1 ]; then printf 'PGDMP-czesciowy'; exit 1; fi
   printf 'PGDMP-zrzut-testowy'
 else
   cat "$TMP/uploads.tgz"
 fi
 EOF
 chmod +x "$bfake/ssh"
-if [ "$(PATH="$bfake:$PATH" command -v ssh)" != "$bfake/ssh" ]; then
+if [[ $bfake == *:* ]] || [ "$(PATH="$bfake:$PATH" command -v ssh)" != "$bfake/ssh" ]; then
   fail "atrapa ssh nie jest pierwsza w PATH — pomijam test, żeby nie łączyć się z serwerem"
 else
   outdir="$TMP/kopie"
@@ -324,6 +325,13 @@ else
     pass "backup: pusty zrzut bazy → błąd"
   fi
   assert_eq "backup: po błędzie brak plików" "$(find "$outdir2" -mindepth 1 2>/dev/null | wc -l | tr -d ' ')" "0"
+  outdir3="$TMP/kopie-blad-ssh"
+  if (PATH="$bfake:$PATH" FAKE_FAIL_DUMP=1 bash scripts/backup.sh --config "$FIXTURE" --output-dir "$outdir3") >/dev/null 2>&1; then
+    fail "backup: przerwany zrzut (ssh exit 1) przeszedł"
+  else
+    pass "backup: przerwany zrzut (ssh exit 1) → błąd"
+  fi
+  assert_eq "backup: po przerwanym zrzucie brak plików" "$(find "$outdir3" -mindepth 1 2>/dev/null | wc -l | tr -d ' ')" "0"
 fi
 
 echo
