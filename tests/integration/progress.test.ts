@@ -9,6 +9,7 @@ import {
   ensureStarted,
   getBoard,
   getPendingSubmissions,
+  ProgressError,
   reject,
   resetAll,
   submit,
@@ -266,6 +267,22 @@ describe("progress", () => {
     expect(await countPending()).toBe(1);
     await approve(1);
     expect(await countPending()).toBe(0);
+  });
+
+  it("10c. undoLast(expected) gdy ostatnie DONE jest inne → invalid_transition, stan bez zmian", async () => {
+    await ensureStarted();
+    await advanceTo(3);
+    await expect(undoLast(1)).rejects.toMatchObject({ name: "ProgressError", code: "invalid_transition" });
+    await expect(undoLast(1)).rejects.toBeInstanceOf(ProgressError);
+    expect(await progressOf(2)).toMatchObject({ status: "DONE" });
+    expect(await progressOf(3)).toMatchObject({ status: "ACTIVE" });
+    expect(await prisma.auditLog.count({ where: { action: "undo" } })).toBe(0);
+    expect(await undoLast(2)).toBe(2);
+  });
+
+  it("10d. undoLast(expected) bez żadnego DONE → invalid_transition", async () => {
+    await ensureStarted();
+    await expect(undoLast(1)).rejects.toMatchObject({ code: "invalid_transition" });
   });
 
   it("10b. undoLast po zaliczeniu 28 → 28 ACTIVE, bez następcy", async () => {

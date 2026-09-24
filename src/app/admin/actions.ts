@@ -59,9 +59,12 @@ export async function rejectAction(formData: FormData): Promise<void> {
   done(res.ok ? "rejected" : "stale", taskId);
 }
 
-export async function undoAction(): Promise<void> {
+// taskId = koperta z potwierdzenia; gdy w międzyczasie ostatnie zaliczenie się zmieniło → "stale".
+export async function undoAction(formData: FormData): Promise<void> {
   await requireAdmin();
-  const res = await guarded(() => undoLast());
+  const expected = taskIdFrom(formData);
+  if (expected === null) done("bad_task", null, "#tablica");
+  const res = await guarded(() => undoLast(expected));
   refresh();
   if (!res.ok) done("stale", null, "#tablica");
   done(res.value === null ? "nothing_to_undo" : "undone", res.value, "#tablica");
@@ -76,6 +79,7 @@ export async function resetAction(formData: FormData): Promise<void> {
 }
 
 export async function logoutAction(): Promise<void> {
+  await requireAdmin();
   await clearAdminCookie();
   redirect("/admin/login");
 }

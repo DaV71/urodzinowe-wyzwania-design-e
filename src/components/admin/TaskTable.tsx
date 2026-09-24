@@ -1,6 +1,7 @@
 import { undoAction } from "@/app/admin/actions";
 import styles from "@/app/admin/page.module.css";
 import type { BoardTask } from "@/lib/progress";
+import { TASK_COUNT } from "@/lib/tasks";
 import { formatDuration, formatKm } from "@/lib/text";
 import { formatWarsaw, sourceLabel, statusLabel } from "./format";
 
@@ -53,9 +54,10 @@ export function TaskTable({ tasks }: { tasks: BoardTask[] }) {
         <details className={styles.undo}>
           <summary className={styles.secondary}>Cofnij ostatnie zaliczenie</summary>
           <form action={undoAction} className={styles.undoForm}>
+            <input type="hidden" name="taskId" value={lastDone.id} />
             <p className={styles.small}>
-              Koperta {lastDone.id} („{lastDone.title}”) wróci do otwartych, a koperta {lastDone.id + 1} znowu się
-              zamknie.
+              Koperta {lastDone.id} („{lastDone.title}”) wróci do otwartych
+              {lastDone.id < TASK_COUNT ? `, a koperta ${lastDone.id + 1} znowu się zamknie.` : "."}
             </p>
             <button type="submit" className={styles.danger}>
               Na pewno — cofnij kopertę {lastDone.id}

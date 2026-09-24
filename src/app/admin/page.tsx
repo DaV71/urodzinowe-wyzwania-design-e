@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { CodesList } from "@/components/admin/CodesList";
 import { CopyButton } from "@/components/admin/CopyButton";
 import { DangerZone } from "@/components/admin/DangerZone";
-import { formatWarsaw } from "@/components/admin/format";
+import { formatWarsaw, resolveMessage } from "@/components/admin/format";
 import { PendingCard } from "@/components/admin/PendingCard";
 import { TaskTable } from "@/components/admin/TaskTable";
 import type { Prisma } from "@/generated/prisma/client";
@@ -26,19 +26,6 @@ export async function generateMetadata(): Promise<Metadata> {
   const pending = await countPending();
   return { title: pending > 0 ? `(${pending}) ${TITLE}` : TITLE, robots };
 }
-
-// Komunikaty po akcjach (?msg=…&task=…); `error` = czerwona ramka.
-const MESSAGES: Record<string, { text: (n: string) => string; error?: boolean }> = {
-  approved: { text: (n) => `Zatwierdzone — koperta ${n} zaliczona, świeczka się pali.` },
-  rejected: { text: (n) => `Odrzucone — powód widać w kopercie ${n}.` },
-  undone: { text: (n) => `Cofnięte — koperta ${n} znowu otwarta.` },
-  nothing_to_undo: { text: () => "Nic jeszcze nie zaliczono — nie ma czego cofać.", error: true },
-  reset: { text: () => "Postęp wyzerowany. Otwarta jest tylko koperta 1." },
-  stale: { text: () => "Stan zadania zmienił się — odśwież stronę i sprawdź jeszcze raz.", error: true },
-  no_reason: { text: () => "Podaj powód odrzucenia.", error: true },
-  bad_task: { text: () => "Nieznane zadanie.", error: true },
-  reset_word: { text: () => "Reset nie wykonany — trzeba wpisać słowo RESET.", error: true },
-};
 
 const ACTIONS: Record<string, string> = {
   start: "start gry",
@@ -83,8 +70,7 @@ export default async function AdminPage({
   const startLink = `${env.APP_URL.replace(/\/+$/, "")}/start/${env.PLAYER_TOKEN}`;
 
   const msgKey = one(params.msg);
-  const msg = msgKey ? MESSAGES[msgKey] : undefined;
-  const msgTask = (one(params.task) ?? "").replace(/\D/g, "");
+  const msg = resolveMessage(msgKey, (one(params.task) ?? "").replace(/\D/g, ""));
 
   return (
     <main className={styles.page}>
@@ -101,7 +87,7 @@ export default async function AdminPage({
 
       {msg && (
         <p role={msg.error ? "alert" : "status"} className={msg.error ? styles.flashError : styles.flash}>
-          {msg.text(msgTask)}
+          {msg.text}
         </p>
       )}
 
@@ -167,7 +153,7 @@ export default async function AdminPage({
                     {formatWarsaw(a.createdAt)}
                   </time>
                   <span>
-                    <strong>{ACTIONS[a.action] ?? a.action}</strong>
+                    <strong>{Object.hasOwn(ACTIONS, a.action) ? ACTIONS[a.action] : a.action}</strong>
                     {a.taskId != null && ` · koperta ${a.taskId}`} · {ACTORS[a.actor]}
                     {detail && <span className={styles.auditDetail}> {detail}</span>}
                   </span>

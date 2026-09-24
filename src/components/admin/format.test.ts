@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatReference, formatWarsaw, sourceLabel, statusLabel } from "./format";
+import { formatReference, formatWarsaw, resolveMessage, sourceLabel, statusLabel } from "./format";
 
 describe("formatReference", () => {
   const ref = { taskId: 6, resultSeconds: 760 };
@@ -65,4 +65,27 @@ describe("etykiety", () => {
     expect(sourceLabel("ADMIN")).toBe("admin");
     expect(sourceLabel(null)).toBe("—");
   });
+});
+
+describe("resolveMessage", () => {
+  it("znany klucz sukcesu z numerem koperty", () => {
+    expect(resolveMessage("approved", "3")).toEqual({
+      text: "Zatwierdzone — koperta 3 zaliczona, świeczka się pali.",
+      error: false,
+    });
+  });
+
+  it("znany klucz błędu", () => {
+    expect(resolveMessage("stale", "")).toEqual({
+      text: "Stan zadania zmienił się — odśwież stronę i sprawdź jeszcze raz.",
+      error: true,
+    });
+  });
+
+  it.each(["constructor", "__proto__", "toString", "hasOwnProperty", "nieznany", "", undefined])(
+    "klucz spoza listy (%s) → undefined",
+    (key) => {
+      expect(resolveMessage(key, "1")).toBeUndefined();
+    },
+  );
 });

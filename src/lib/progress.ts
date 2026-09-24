@@ -295,9 +295,13 @@ export async function completeWithCode(
 }
 
 // Cofa tylko ostatnie DONE; jego następca (ACTIVE/PENDING_REVIEW) wraca do LOCKED.
-export async function undoLast(): Promise<number | null> {
+// `expectedTaskId` (z potwierdzenia w panelu): gdy ostatnie DONE jest inne → invalid_transition, nic się nie zmienia.
+export async function undoLast(expectedTaskId?: number): Promise<number | null> {
   return prisma.$transaction(async (tx) => {
     const last = await tx.taskProgress.findFirst({ where: { status: "DONE" }, orderBy: { taskId: "desc" } });
+    if (expectedTaskId !== undefined && last?.taskId !== expectedTaskId) {
+      throw new ProgressError("invalid_transition");
+    }
     if (!last) return null;
     const taskId = last.taskId;
 
