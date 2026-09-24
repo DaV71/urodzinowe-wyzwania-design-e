@@ -521,7 +521,7 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
 **Pliki:**
 - Create: `Dockerfile`, `docker/entrypoint.sh`, `docker-compose.prod.yml`, `tests/docker-smoke.sh`, `tests/compose.smoke.yml`
 
-- [ ] **Krok 1: `Dockerfile`** — stage `base` (`node:24-slim`), `deps` (`npm ci`), `build` (`npx prisma generate`, `npm run build`,
+- [x] **Krok 1: `Dockerfile`** — stage `base` (`node:24-slim`), `deps` (`npm ci`), `build` (`npx prisma generate`, `npm run build`,
   `NEXT_TELEMETRY_DISABLED=1`), `prisma-cli`:
   ```dockerfile
   FROM base AS prisma-cli
@@ -534,7 +534,7 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   kopie `public`, `.next/standalone` → `./`, `.next/static` → `./.next/static`, `prisma/`, `prisma.config.ts`, `/tools/node_modules` → `./tools/node_modules`,
   `docker/entrypoint.sh`; `RUN mkdir -p /data/uploads && chown -R node:node /data /app`; `USER node`; `EXPOSE 3000`; `CMD ["./entrypoint.sh"]`.
   Fallback gdy CLI nie załaduje `.ts` w runtime: `prisma.config.mjs` (ESM, ta sama treść).
-- [ ] **Krok 2: `docker/entrypoint.sh`**:
+- [x] **Krok 2: `docker/entrypoint.sh`**:
   ```sh
   #!/bin/sh
   set -eu
@@ -543,19 +543,19 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   echo "Seed…";     NODE_PATH=/app/tools/node_modules node prisma/seed.cjs
   echo "Start…";    exec node server.js
   ```
-- [ ] **Krok 3: `docker-compose.prod.yml`** — 1:1 z `demo-deploy.md` i SPEC §10: `name: urodzinowe`; `db` `postgres:16` tylko `internal`
+- [x] **Krok 3: `docker-compose.prod.yml`** — 1:1 z `demo-deploy.md` i SPEC §10: `name: urodzinowe`; `db` `postgres:16` tylko `internal`
   z healthcheck `pg_isready`; `app` `container_name: urodzinowe`, env: `NODE_ENV`, `DATABASE_URL`, `AUTH_SECRET`, `CODES_SECRET`,
   `PLAYER_TOKEN`, `ADMIN_PASSWORD` (wszystkie `:?komunikat`), `APP_URL: "https://${APP_DOMAIN:?APP_DOMAIN musi byc ustawiony w .env}"`,
   `UPLOAD_DIR: /data/uploads`;
   `volumes: ["uploads:/data/uploads"]`; `networks: [internal, web]`; labele `caddy`, `caddy.reverse_proxy: "{{upstreams 3000}}"`,
   `caddy.tls: "/certs/wildcard.crt /certs/wildcard.key"`, `caddy.import: secure_headers`, `caddy.request_body.max_size: 45MB`;
   healthcheck `fetch('http://localhost:3000/api/health')`, `start_period: 60s`; `networks: internal, web (external: true)`; `volumes: dbdata, uploads`.
-- [ ] **Krok 4: `tests/docker-smoke.sh`** — `docker network create web 2>/dev/null || true`; `.env` testowy z losowymi wartościami;
+- [x] **Krok 4: `tests/docker-smoke.sh`** — `docker network create web 2>/dev/null || true`; `.env` testowy z losowymi wartościami;
   `docker compose -f docker-compose.prod.yml -f tests/compose.smoke.yml up -d --build` (override usuwa labele caddy i dodaje nic więcej);
   pętla ≤ 90 s na `docker inspect --format '{{.State.Health.Status}}' urodzinowe` == `healthy`; `down -v`. Asercje statyczne:
   brak `ports:` w compose prod, `db` bez `web`.
-- [ ] **Krok 5: Uruchom** `bash tests/docker-smoke.sh` → healthy (bez Dockera lokalnie: zaznacz w raporcie, zostaw krok nieodhaczony).
-- [ ] **Krok 6: Commit** `claude: T9 — Dockerfile, entrypoint, compose produkcyjny`.
+- [x] **Krok 5: Uruchom** `bash tests/docker-smoke.sh` → healthy (bez Dockera lokalnie: zaznacz w raporcie, zostaw krok nieodhaczony).
+- [x] **Krok 6: Commit** `claude: T9 — Dockerfile, entrypoint, compose produkcyjny`.
 
 ---
 

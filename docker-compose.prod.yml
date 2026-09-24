@@ -1,0 +1,61 @@
+# Stack produkcyjny (app + baza) — wzorzec z demo-deploy.md, SPEC §10.
+# Uruchamiany na serwerze przez scripts/deploy.sh: docker compose -f docker-compose.prod.yml up -d --build
+# Brak `ports:` — ruch z internetu wchodzi wyłącznie przez wspólny proxy (sieć `web`, etykiety caddy.*).
+name: urodzinowe
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-urodzinowe}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD musi byc ustawiony w .env}"
+      POSTGRES_DB: "${POSTGRES_DB:-urodzinowe}"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    networks: [internal]               # baza TYLKO w sieci prywatnej
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-urodzinowe} -d ${POSTGRES_DB:-urodzinowe}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: urodzinowe
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-urodzinowe}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD musi byc ustawiony w .env}@db:5432/${POSTGRES_DB:-urodzinowe}?schema=public"
+      AUTH_SECRET: "${AUTH_SECRET:?AUTH_SECRET musi byc ustawiony w .env}"
+      CODES_SECRET: "${CODES_SECRET:?CODES_SECRET musi byc ustawiony w .env}"
+      PLAYER_TOKEN: "${PLAYER_TOKEN:?PLAYER_TOKEN musi byc ustawiony w .env}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:?ADMIN_PASSWORD musi byc ustawiony w .env}"
+      APP_URL: "https://${APP_DOMAIN:?APP_DOMAIN musi byc ustawiony w .env}"
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - uploads:/data/uploads          # zdjęcia dowodów — przeżywają redeploy
+    networks: [internal, web]           # internal = do bazy, web = do proxy
+    labels:                             # to czyta wspólny proxy — bez tego apka jest niewidoczna z netu
+      caddy: "${APP_DOMAIN:?APP_DOMAIN musi byc ustawiony w .env}"
+      caddy.reverse_proxy: "{{upstreams 3000}}"          # port apki W kontenerze
+      caddy.tls: "/certs/wildcard.crt /certs/wildcard.key"
+      caddy.import: secure_headers
+      caddy.request_body.max_size: 45MB                   # do 4 zdjęć × 10 MB + pola formularza
+    healthcheck:                        # proxy/deploy czeka aż apka realnie wstanie (i ma połączenie z bazą)
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s                 # czas na migracje + seed + start
+
+networks:
+  internal:                             # prywatna, tworzona przez compose
+  web:
+    external: true                      # współdzielona z proxy — MUSI już istnieć
+
+volumes:
+  dbdata:
+  uploads:

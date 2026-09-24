@@ -1,0 +1,6 @@
+# Nakładka dla tests/docker-smoke.sh: bez etykiet caddy (lokalny/testowy stack nie może ogłaszać
+# trasy wspólnemu proxy) i z osobną nazwą kontenera, żeby test nigdy nie dotknął produkcyjnego `urodzinowe`.
+services:
+  app:
+    container_name: urodzinowe-smoke
+    labels: !reset {}
