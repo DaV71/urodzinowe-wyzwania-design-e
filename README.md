@@ -2,7 +2,8 @@
 
 Prezent urodzinowy w formie aplikacji webowej dla jednej osoby: 28 zadań sportowych w 4 etapach po 7, schowanych w kopertach.
 Koperty otwierają się po kolei, każde zaliczone zadanie zapala świeczkę na torcie, a po 28. odblokowuje się nagroda główna.
-Zadanie zalicza Dawid: zatwierdza zgłoszenie w panelu albo podaje jednorazowy kod. Postęp jest zapisany tylko na serwerze.
+Zadanie zalicza Dawid: zatwierdza zgłoszenie w panelu albo podaje kod zadania (kod jest stały dla danego zadania,
+więc po cofnięciu zaliczenia działa ponownie). Postęp jest zapisany tylko na serwerze.
 Stos: Next.js 16, Prisma 7, Postgres 16, Docker. Specyfikacja: `docs/superpowers/specs/2026-09-23-urodzinowe-wyzwania-design.md`.
 
 ## Jak to działa
@@ -10,8 +11,8 @@ Stos: Next.js 16, Prisma 7, Postgres 16, Docker. Specyfikacja: `docs/superpowers
 1. Jubilat(ka) wchodzi raz przez sekretny link `https://<domena>/start/<PLAYER_TOKEN>`. Link zapisuje cookie na 120 dni,
    później wystarczy sam adres. Bez cookie strona pokazuje tylko zaklejoną kopertę.
 2. Otwarta jest zawsze jedna koperta. Treść kolejnych nie trafia do przeglądarki, dopóki się nie otworzą.
-3. Jubilat klika „Zrobione — zapal świeczkę”, dołącza dowód (zdjęcie lub screenshot, do 4 plików) i, jeśli zadanie tego wymaga,
-   dystans i czas. Koperta przechodzi w stan „czeka na Dawida”.
+3. Jubilat klika „Zrobione — zapal świeczkę”, dołącza dowód (1 zdjęcie lub screenshot,
+   a w zadaniach z tygodniowymi treningami do 4) i, jeśli zadanie tego wymaga, dystans i czas. Koperta przechodzi w stan „czeka na Dawida”.
 4. Aplikacja nie wysyła powiadomień. Dawid sam zagląda do `/admin` (liczba oczekujących zgłoszeń jest w tytule karty)
    i zatwierdza albo odrzuca zgłoszenie z podaniem powodu. Po zatwierdzeniu świeczka się zapala i otwiera się następna koperta.
 5. Zamiast zgłoszenia można wpisać w kopercie kod `XXXX-XXXX` od Dawida (np. przy wspólnym biegu). Kod zalicza zadanie od razu.
@@ -81,6 +82,10 @@ bash scripts/deploy.sh --set-secret ADMIN_PASSWORD
 bash scripts/deploy.sh --set-secret CODES_SECRET      # unieważnia wydrukowane kody, trzeba je wydrukować ponownie
 bash scripts/deploy.sh --set-secret AUTH_SECRET       # wylogowuje wszystkie sesje
 ```
+
+Rotacja `PLAYER_TOKEN` albo `ADMIN_PASSWORD` unieważnia tylko stary link albo hasło — urządzenia, które są już zalogowane
+(cookie jubilata i sesja admina), działają dalej. Żeby je wylogować, zrotuj też `AUTH_SECRET`:
+`bash scripts/deploy.sh --set-secret AUTH_SECRET`.
 
 `POSTGRES_PASSWORD` nie da się zmienić tą drogą, bo hasło istniejącej bazy wymaga `ALTER USER`. Inne opcje: `--config <plik>`,
 `--no-wait` (`bash scripts/deploy.sh --help`).
