@@ -5,6 +5,7 @@ import type {
   Proof,
   Source,
   Submission,
+  SubmissionStatus,
   Task,
   TaskStatus,
 } from "@/generated/prisma/client";
@@ -36,6 +37,23 @@ export type BoardTask = {
   completedAt?: Date | null;
   lastRejectReason?: string | null;
   pending?: { createdAt: Date; photos: string[] } | null;
+  /** Zatwierdzone zgłoszenie (podgląd dowodu) — tylko dla DONE; null, gdy zaliczono kodem bez zgłoszenia. */
+  approved?: SubmissionView | null;
+  /** Wszystkie zgłoszenia od najnowszego — tylko dla admina (`withHistory`). */
+  history?: SubmissionView[];
+};
+
+export type SubmissionView = {
+  id: string;
+  status: SubmissionStatus;
+  createdAt: Date;
+  reviewedAt: Date | null;
+  photos: string[];
+  note: string | null;
+  distanceM: number | null;
+  durationS: number | null;
+  reviewNote: string | null;
+  warnings: string[];
 };
 
 export type Board = { done: number; total: number; tasks: BoardTask[] };
@@ -79,14 +97,28 @@ export async function ensureStarted(): Promise<void> {
   await prisma.$transaction((tx) => startInTx(tx));
 }
 
-export async function getBoard(opts: { revealLocked?: boolean } = {}): Promise<Board> {
+function toView(s: Submission): SubmissionView {
+  return {
+    id: s.id,
+    status: s.status,
+    createdAt: s.createdAt,
+    reviewedAt: s.reviewedAt,
+    photos: asStrings(s.photos),
+    note: s.note,
+    distanceM: s.distanceM,
+    durationS: s.durationS,
+    reviewNote: s.reviewNote,
+    warnings: asStrings(s.warnings),
+  };
+}
+
+export async function getBoard(opts: { revealLocked?: boolean; withHistory?: boolean } = {}): Promise<Board> {
   await ensureStarted();
   const rows = await prisma.taskProgress.findMany({
     orderBy: { taskId: "asc" },
     include: {
-      task: {
-        include: { submissions: { where: { status: "PENDING" }, orderBy: { createdAt: "desc" }, take: 1 } },
-      },
+      // Od najnowszego: pierwsze PENDING to bieżące zgłoszenie, pierwsze APPROVED — zatwierdzony dowód.
+      task: { include: { submissions: { orderBy: [{ createdAt: "desc" }, { id: "desc" }] } } },
     },
   });
 
@@ -94,7 +126,8 @@ export async function getBoard(opts: { revealLocked?: boolean } = {}): Promise<B
     const t = p.task;
     // Tytuły/opisy zadań LOCKED nigdy nie wychodzą poza serwer (chyba że admin prosi o podgląd).
     if (p.status === "LOCKED" && !opts.revealLocked) return { id: t.id, stage: t.stage, status: p.status };
-    const pending = t.submissions[0];
+    const pending = t.submissions.find((s) => s.status === "PENDING");
+    const approved = t.submissions.find((s) => s.status === "APPROVED");
     return {
       id: t.id,
       stage: t.stage,
@@ -112,6 +145,8 @@ export async function getBoard(opts: { revealLocked?: boolean } = {}): Promise<B
       completedAt: p.completedAt,
       lastRejectReason: p.lastRejectReason,
       pending: pending ? { createdAt: pending.createdAt, photos: asStrings(pending.photos) } : null,
+      ...(p.status === "DONE" ? { approved: approved ? toView(approved) : null } : {}),
+      ...(opts.withHistory ? { history: t.submissions.map(toView) } : {}),
     };
   });
 

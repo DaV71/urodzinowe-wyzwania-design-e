@@ -329,4 +329,53 @@ describe("progress", () => {
     const actions = (await prisma.auditLog.findMany({ where: { taskId: 1 } })).map((a) => `${a.actor}:${a.action}`);
     expect(actions).toEqual(expect.arrayContaining(["PLAYER:submit", "ADMIN:approve"]));
   });
+
+  it("14. getBoard: zaliczona koperta ma podgląd zatwierdzonego zgłoszenia, inne nie", async () => {
+    await ensureStarted();
+    const sent = await submit(1, { photos: [photo("a")], note: "nowe buty", distanceM: 1200, durationS: 400 });
+    expect(sent.ok).toBe(true);
+    await approve(1);
+    const board = await getBoard();
+    expect(board.tasks[0].approved).toMatchObject({
+      photos: ["uploads/pa.jpg"],
+      note: "nowe buty",
+      distanceM: 1200,
+      durationS: 400,
+    });
+    expect(board.tasks[0].approved?.createdAt).toBeInstanceOf(Date);
+    expect(board.tasks[1].approved ?? null).toBeNull();
+    expect(board.tasks[2]).not.toHaveProperty("approved");
+    expect(board.tasks[0]).not.toHaveProperty("history");
+  });
+
+  it("15. getBoard: po odrzuceniu i ponownym zatwierdzeniu podgląd pokazuje zatwierdzone zgłoszenie", async () => {
+    await ensureStarted();
+    await submit(1, { photos: [photo("stare")], note: "pierwsze" });
+    await reject(1, "nieczytelne");
+    await submit(1, { photos: [photo("nowe")], note: "drugie" });
+    await approve(1);
+    const board = await getBoard();
+    expect(board.tasks[0].approved).toMatchObject({ note: "drugie", photos: ["uploads/pnowe.jpg"] });
+  });
+
+  it("16. getBoard: koperta zaliczona kodem bez zgłoszenia ma approved = null", async () => {
+    await ensureStarted();
+    const r = await completeWithCode(1, codeForTask(getEnv().CODES_SECRET, 1));
+    expect(r.ok).toBe(true);
+    const board = await getBoard();
+    expect(board.tasks[0].status).toBe("DONE");
+    expect(board.tasks[0].approved).toBeNull();
+  });
+
+  it("17. getBoard({ withHistory }) zwraca historię zgłoszeń od najnowszego, z powodem odrzucenia", async () => {
+    await ensureStarted();
+    await submit(1, { photos: [photo("x")] });
+    await reject(1, "brak daty");
+    await submit(1, { photos: [photo("y")] });
+    const board = await getBoard({ revealLocked: true, withHistory: true });
+    const h = board.tasks[0].history ?? [];
+    expect(h.map((s) => s.status)).toEqual(["PENDING", "REJECTED"]);
+    expect(h[1]).toMatchObject({ reviewNote: "brak daty", photos: ["uploads/px.jpg"] });
+    expect(board.tasks[5].history).toEqual([]);
+  });
 });

@@ -61,7 +61,7 @@ export default async function AdminPage({
   const env = getEnv();
 
   const [board, pending, audit] = await Promise.all([
-    getBoard({ revealLocked: true }),
+    getBoard({ revealLocked: true, withHistory: true }),
     getPendingSubmissions(),
     prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 50 }),
   ]);

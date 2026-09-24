@@ -32,7 +32,15 @@ export async function generateMetadata(): Promise<Metadata> {
 function Envelope({ task }: { task: BoardTask }) {
   switch (task.status) {
     case "DONE":
-      return <EnvelopeDone n={task.id} title={task.title ?? ""} />;
+      return (
+        <EnvelopeDone
+          n={task.id}
+          title={task.title ?? ""}
+          completedAt={task.completedAt}
+          source={task.source}
+          approved={task.approved}
+        />
+      );
     case "ACTIVE":
     case "PENDING_REVIEW":
       return <EnvelopeActive task={task} />;

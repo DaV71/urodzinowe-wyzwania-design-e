@@ -3,6 +3,7 @@ import styles from "@/app/admin/page.module.css";
 import type { BoardTask } from "@/lib/progress";
 import { TASK_COUNT } from "@/lib/tasks";
 import { formatDuration, formatKm } from "@/lib/text";
+import { SubmissionPreview } from "@/components/SubmissionPreview";
 import { formatWarsaw, sourceLabel, statusLabel } from "./format";
 
 const STATUS_CLASS = {
@@ -42,6 +43,20 @@ export function TaskTable({ tasks }: { tasks: BoardTask[] }) {
                     {res && ` · ${res}`}
                     {t.completedAt && ` · ${formatWarsaw(t.completedAt)}`}
                   </span>
+                )}
+                {t.history && t.history.length > 0 && (
+                  <details className={styles.history}>
+                    <summary className={styles.historySummary}>
+                      Zobacz {t.history.length === 1 ? "zgłoszenie" : `zgłoszenia (${t.history.length})`}
+                    </summary>
+                    <ol className={styles.historyList}>
+                      {t.history.map((s) => (
+                        <li key={s.id} className={styles.historyItem}>
+                          <SubmissionPreview submission={s} admin />
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
                 )}
               </div>
               <span className={`${styles.status} ${STATUS_CLASS[t.status]}`}>{statusLabel(t.status)}</span>
