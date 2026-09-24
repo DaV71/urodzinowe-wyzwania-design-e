@@ -1,0 +1,131 @@
+.gift {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  overflow: hidden;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: var(--card);
+}
+
+/* Wstążka: pas pionowy i poziomy przez środek. */
+.ribbonV {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 14px;
+  margin-left: -7px;
+  border-right: 2px solid var(--ink);
+  border-left: 2px solid var(--ink);
+  background: var(--accent);
+}
+
+.ribbonH {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 14px;
+  margin-top: -7px;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  background: var(--accent);
+}
+
+.lock {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 56px;
+  height: 56px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.lockIcon {
+  width: 26px;
+  height: 26px;
+}
+
+.text {
+  position: relative;
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--card);
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.count {
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1;
+}
+
+.note {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+@media (min-width: 1024px) {
+  .gift {
+    gap: 20px;
+    padding: 24px;
+    border-radius: 16px;
+  }
+
+  .ribbonV {
+    width: 16px;
+    margin-left: -8px;
+  }
+
+  .ribbonH {
+    height: 16px;
+    margin-top: -8px;
+  }
+
+  .lock {
+    width: 64px;
+    height: 64px;
+  }
+
+  .lockIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .text {
+    gap: 4px;
+    padding: 8px 10px;
+  }
+
+  .label {
+    font-size: 12px;
+  }
+
+  .count {
+    font-size: 30px;
+  }
+
+  .note {
+    font-size: 14px;
+  }
+}

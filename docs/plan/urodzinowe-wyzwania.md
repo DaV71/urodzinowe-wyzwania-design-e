@@ -469,11 +469,11 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
 - Produces: action `submitTaskAction(prev, formData)` (pola `taskId`, `note`, `photos[]`, `distanceKm`, `duration`, `code`)
   → `{ ok: true } | { error: string }`; strona `/`.
 
-- [ ] **Krok 1: `page.tsx`** (Server Component): bez `isPlayer()` → top bar + jedna koperta zaklejona z tekstem "Ta strona otwiera się
+- [x] **Krok 1: `page.tsx`** (Server Component): bez `isPlayer()` → top bar + jedna koperta zaklejona z tekstem "Ta strona otwiera się
   tylko z właściwym linkiem." (bez imienia i liczb), status 200. Gracz: `ensureStarted()`, `getBoard()`. Mobile: TopBar → Cake →
   ProgressPill → Hero → lista (StageHeader + koperty) → Gift → Footer. Desktop: grid `520px minmax(0,1fr)`; lewa: Cake, Hero, Gift, Footer;
   prawa: nagłówek "Koperty · {done} / 28 zaliczone" + lista.
-- [ ] **Krok 2: Koperty** wg SPEC §8. `EnvelopeActive` `{ task: BoardTask }`: status ACTIVE → opis, pasek odrzucenia gdy
+- [x] **Krok 2: Koperty** wg SPEC §8. `EnvelopeActive` `{ task: BoardTask }`: status ACTIVE → opis, pasek odrzucenia gdy
   `lastRejectReason`, `SubmitForm`; PENDING_REVIEW → pigułka "CZEKA NA DAWIDA", tekst z datą, miniatury (`/api/uploads/<path>`).
   `SubmitForm` (`useActionState`): `proofHint`; pola `distanceKm` (`inputmode="decimal"`, placeholder "2,10") i `duration`
   (placeholder "12:40") wg `askDistance/askDuration`; `<input type="file" accept="image/*" capture="environment" multiple?>`
@@ -482,14 +482,14 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   `too_many_photos` → "Maksymalnie {n} zdjęcia.", `bad_code` → "Zły kod. Spróbuj jeszcze raz.", `rate_limited` → "Za dużo prób. Odczekaj 10 minut.",
   `type`/`size` → "Zdjęcie: tylko JPG/PNG/WEBP/HEIC do 10 MB.", `bad_duration` → "Czas w formacie mm:ss.", po sukcesie zgłoszenia
   "Wysłane! Dawid dostał znać." (strona odświeża się przez `revalidatePath`).
-- [ ] **Krok 3: `actions.ts`** — `"use server"`; `isPlayer()` inaczej `{error:"forbidden"}`; `code` niepuste → `completeWithCode`;
+- [x] **Krok 3: `actions.ts`** — `"use server"`; `isPlayer()` inaczej `{error:"forbidden"}`; `code` niepuste → `completeWithCode`;
   inaczej: parsuj `distanceKm` (przecinek lub kropka → metry), `duration` (`parseDuration`), zapisz każde zdjęcie `saveUpload`
   (przy błędzie typu/rozmiaru zwróć błąd przed zapisem czegokolwiek do DB), `submit(...)`. `revalidatePath("/")`.
-- [ ] **Krok 4: Prezent** — `GiftLocked {left}` z pluralizacją; `GiftUnlocked {title, description}` bez "Od nowa".
-- [ ] **Krok 5: Ręcznie** — `npm run dev`, wejście linkiem, zgłoszenie zadania 1 ze zdjęciem z telefonu (devtools → tryb mobilny),
+- [x] **Krok 4: Prezent** — `GiftLocked {left}` z pluralizacją; `GiftUnlocked {title, description}` bez "Od nowa".
+- [x] **Krok 5: Ręcznie** — `npm run dev`, wejście linkiem, zgłoszenie zadania 1 ze zdjęciem z telefonu (devtools → tryb mobilny),
   kod dla zadania (skrypt `node -e` z `codeForTask`), sprawdź 390 px i 1280 px; `curl localhost:3000` bez cookie nie zawiera `site.name`
   ani tytułów zadań.
-- [ ] **Krok 6: `npm run check`**, commit `claude: T7 — strona jubilata`.
+- [x] **Krok 6: `npm run check`**, commit `claude: T7 — strona jubilata`.
 
 ---
 

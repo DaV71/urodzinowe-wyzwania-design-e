@@ -1,0 +1,129 @@
+.page {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 0 20px 32px;
+}
+
+/*
+ * Mobile: jedna kolumna — tort, hero, koperty, prezent, stopka.
+ * Desktop: dwie kolumny; lewa (tort, hero, prezent, stopka), prawa (koperty na całą wysokość).
+ * Ostatni wiersz 1fr przejmuje wysokość listy, więc lewa kolumna nie rozjeżdża się w pionie.
+ */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "cake"
+    "hero"
+    "list"
+    "gift"
+    "footer";
+}
+
+.cake {
+  grid-area: cake;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 30px;
+}
+
+.hero {
+  grid-area: hero;
+  padding-top: 28px;
+}
+
+.list {
+  grid-area: list;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 28px;
+}
+
+/* Nagłówek listy tylko na desktopie (artboard mobile go nie ma). */
+.listHeader {
+  display: none;
+}
+
+.stage {
+  display: contents;
+}
+
+.gift {
+  grid-area: gift;
+  padding-top: 26px;
+}
+
+.footer {
+  grid-area: footer;
+  padding-top: 28px;
+}
+
+/* Widok bez dostępu: jedna koperta. */
+.lockedOnly {
+  width: 100%;
+  max-width: 520px;
+  margin: 48px auto 0;
+}
+
+@media (min-width: 1024px) {
+  .page {
+    padding: 0 72px 48px;
+  }
+
+  .layout {
+    grid-template-columns: 520px minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto 1fr;
+    grid-template-areas:
+      "cake list"
+      "hero list"
+      "gift list"
+      "footer list"
+      ". list";
+    column-gap: 72px;
+    row-gap: 32px;
+    padding-top: 48px;
+  }
+
+  .cake,
+  .hero,
+  .list,
+  .gift,
+  .footer {
+    padding-top: 0;
+  }
+
+  .listHeader {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 6px;
+    border-bottom: 3px solid var(--ink);
+  }
+
+  .lockedOnly {
+    margin-top: 96px;
+  }
+}
+
+.listTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.listCount {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}

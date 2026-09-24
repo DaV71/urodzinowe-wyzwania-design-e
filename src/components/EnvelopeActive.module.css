@@ -1,0 +1,119 @@
+.envelope {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 6px 6px 0 var(--accent);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pill {
+  padding: 4px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--yellow);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 1px;
+  overflow-wrap: anywhere;
+}
+
+.description {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.rejected {
+  margin: 0;
+  padding: 10px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: var(--yellow);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.waiting {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.thumbLink {
+  display: block;
+  border-radius: 8px;
+}
+
+.thumb {
+  display: block;
+  box-sizing: border-box;
+  width: 64px;
+  height: 64px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--bg);
+  object-fit: cover;
+}
+
+@media (min-width: 1024px) {
+  .envelope {
+    padding: 22px 24px;
+    box-shadow: 8px 8px 0 var(--accent);
+  }
+
+  .pill {
+    padding: 4px 12px;
+  }
+
+  .icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .title {
+    font-size: 40px;
+  }
+
+  .description {
+    font-size: 16px;
+  }
+}

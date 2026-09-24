@@ -1,0 +1,78 @@
+.gift {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 22px;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: var(--yellow);
+  box-shadow: 6px 6px 0 var(--ink);
+  text-align: center;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+}
+
+/* Mobile: elementy tekstu są bezpośrednio w kolumnie karty (gap 10). */
+.text {
+  display: contents;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.description {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+@media (min-width: 1024px) {
+  .gift {
+    flex-direction: row;
+    gap: 24px;
+    padding: 28px;
+    border-radius: 16px;
+    box-shadow: 8px 8px 0 var(--ink);
+    text-align: left;
+  }
+
+  .icon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .text {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .label {
+    font-size: 12px;
+  }
+
+  .title {
+    font-size: 44px;
+  }
+
+  .description {
+    font-size: 15px;
+  }
+}
