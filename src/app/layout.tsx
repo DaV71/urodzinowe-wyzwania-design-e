@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Anton, Space_Grotesk } from "next/font/google";
-import { site } from "@/config/site";
 import "./globals.css";
 
 const anton = Anton({ weight: "400", subsets: ["latin", "latin-ext"], variable: "--font-anton" });
@@ -11,9 +10,10 @@ const grotesk = Space_Grotesk({
   variable: "--font-grotesk",
 });
 
+// Neutralne metadane: layout obejmuje też 404, /admin/login i /dev/preview (bez dostępu gracza).
+// Spersonalizowany tytuł ustawia tylko strona główna dla gracza (generateMetadata w page.tsx).
 export const metadata: Metadata = {
-  title: `Urodzinowe wyzwania — ${site.name}`,
-  description: `${site.totalTasks} wyzwań na ${site.age}. urodziny`,
+  title: "Urodzinowe wyzwania",
 };
 
 export const viewport: Viewport = {

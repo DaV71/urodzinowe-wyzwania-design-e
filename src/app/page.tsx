@@ -18,11 +18,15 @@ import styles from "./page.module.css";
 
 const GENERIC_TITLE = "Urodzinowe wyzwania";
 
-// Nadpisuje tytuł/opis z layoutu, żeby bez dostępu HTML nie zawierał imienia ani liczb.
+// Imię i wiek w tytule/opisie tylko dla gracza — bez dostępu HTML nie zawiera imienia ani liczb.
 export async function generateMetadata(): Promise<Metadata> {
   const robots = { index: false, follow: false };
-  if (!(await isPlayer())) return { title: GENERIC_TITLE, description: null, robots };
-  return { robots };
+  if (!(await isPlayer())) return { title: GENERIC_TITLE, robots };
+  return {
+    title: `${GENERIC_TITLE} — ${site.name}`,
+    description: `${site.totalTasks} wyzwań na ${site.age}. urodziny`,
+    robots,
+  };
 }
 
 function Envelope({ task }: { task: BoardTask }) {
