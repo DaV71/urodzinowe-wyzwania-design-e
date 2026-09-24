@@ -245,6 +245,87 @@ else
   echo "  pomijam (brak curl)"
 fi
 
+echo "8. build_ssh_cmd"
+out=$(set_test_config && validate_config && build_ssh_cmd && echo "${SSH_CMD[*]}|$SSH_HINT")
+assert_eq "bez klucza: komenda ssh" "${out%%|*}" \
+  "ssh -p 22 -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new deploy@203.0.113.10"
+assert_eq "bez klucza: podpowiedź" "${out#*|}" "ssh -p 22 deploy@203.0.113.10"
+touch "$TMP/klucz"
+out=$(set_test_config && SSH_PORT=2222 SSH_KEY="$TMP/klucz" && validate_config && build_ssh_cmd && echo "${SSH_CMD[*]}")
+assert_contains "z kluczem: -i ścieżka" "$out" "-i $TMP/klucz"
+assert_contains "z kluczem: port" "$out" "-p 2222"
+assert_eq "z kluczem: host na końcu" "${out##* }" "deploy@203.0.113.10"
+assert_fails "nieistniejący klucz → die" bash -c "
+  source '$LIB'
+  SERVER_HOST=h SSH_USER=u APP_DOMAIN=app.example.pl REPO_URL=https://x/y.git SSH_KEY='$TMP/brak-klucza'
+  validate_config
+  build_ssh_cmd"
+
+echo "9. backup.sh"
+if [ ! -x scripts/backup.sh ] && [ "$(git ls-files -s scripts/backup.sh | cut -c1-6)" != 100755 ]; then
+  fail "scripts/backup.sh nie jest wykonywalny (ani na dysku, ani w indeksie gita)"
+else
+  pass "scripts/backup.sh wykonywalny"
+fi
+if out=$(bash -n scripts/backup.sh 2>&1); then pass "backup.sh: bash -n"; else fail "backup.sh: bash -n: $out"; fi
+if bdry=$(bash scripts/backup.sh --dry-run --config "$FIXTURE" 2>/dev/null); then
+  pass "backup dry-run: exit 0"
+else
+  fail "backup dry-run: exit != 0"
+fi
+assert_contains "backup dry-run: pg_dump -Fc" "$bdry" "pg_dump"
+assert_contains "backup dry-run: format custom" "$bdry" "-Fc"
+assert_contains "backup dry-run: exec -T db" "$bdry" "exec -T db"
+assert_contains "backup dry-run: wolumen uploads" "$bdry" "urodzinowe_uploads"
+assert_contains "backup dry-run: katalog z configu" "$bdry" '"$HOME"/urodzinowe'
+assert_contains "backup dry-run: compose produkcyjny" "$bdry" "docker-compose.prod.yml"
+assert_not_contains "backup dry-run: bez ssh" "$bdry" "ssh "
+assert_bash_syntax "backup dry-run: skrypt zdalny przechodzi bash -n" "$bdry"
+assert_fails "backup: nieznana opcja odrzucona" bash scripts/backup.sh --dry-run --config "$FIXTURE" --bzdura
+assert_fails "backup: brak pliku configu → błąd" bash scripts/backup.sh --dry-run --config "$TMP/brak.conf"
+
+echo "9a. backup.sh z atrapą ssh (bez połączenia z serwerem)"
+# Atrapa ssh czyta skrypt zdalny ze stdin i odpowiada zależnie od treści: zrzut bazy albo archiwum uploadów.
+bfake="$TMP/fake-backup-bin"
+mkdir -p "$bfake" "$TMP/uploads-src"
+echo zdjecie >"$TMP/uploads-src/a.jpg"
+tar czf "$TMP/uploads.tgz" -C "$TMP/uploads-src" .
+cat >"$bfake/ssh" <<EOF
+#!/usr/bin/env bash
+script=\$(cat)
+if [[ \$script == *pg_dump* ]]; then
+  [ "\${FAKE_EMPTY_DUMP:-0}" = 1 ] && exit 0
+  printf 'PGDMP-zrzut-testowy'
+else
+  cat "$TMP/uploads.tgz"
+fi
+EOF
+chmod +x "$bfake/ssh"
+if [ "$(PATH="$bfake:$PATH" command -v ssh)" != "$bfake/ssh" ]; then
+  fail "atrapa ssh nie jest pierwsza w PATH — pomijam test, żeby nie łączyć się z serwerem"
+else
+  outdir="$TMP/kopie"
+  if (PATH="$bfake:$PATH" bash scripts/backup.sh --config "$FIXTURE" --output-dir "$outdir") >/dev/null 2>&1; then
+    pass "backup z atrapą: exit 0"
+  else
+    fail "backup z atrapą: exit != 0"
+  fi
+  dumps=("$outdir"/db-*.dump)
+  tgzs=("$outdir"/uploads-*.tgz)
+  if [ -s "${dumps[0]}" ]; then pass "backup: plik db-*.dump"; else fail "backup: brak db-*.dump"; fi
+  if [ -s "${tgzs[0]}" ]; then pass "backup: plik uploads-*.tgz"; else fail "backup: brak uploads-*.tgz"; fi
+  [[ ${dumps[0]##*/} =~ ^db-[0-9]{8}-[0-9]{6}\.dump$ ]] && pass "backup: nazwa db-YYYYMMDD-HHMMSS.dump" ||
+    fail "backup: zła nazwa ${dumps[0]##*/}"
+  assert_eq "backup: brak pozostałości tymczasowych" "$(find "$outdir" -mindepth 1 -name '.*' | wc -l | tr -d ' ')" "0"
+  outdir2="$TMP/kopie-pusty"
+  if (PATH="$bfake:$PATH" FAKE_EMPTY_DUMP=1 bash scripts/backup.sh --config "$FIXTURE" --output-dir "$outdir2") >/dev/null 2>&1; then
+    fail "backup: pusty zrzut bazy przeszedł"
+  else
+    pass "backup: pusty zrzut bazy → błąd"
+  fi
+  assert_eq "backup: po błędzie brak plików" "$(find "$outdir2" -mindepth 1 2>/dev/null | wc -l | tr -d ' ')" "0"
+fi
+
 echo
 echo "Wynik: $PASSED ok, $FAILED błędów"
 [ "$FAILED" -eq 0 ]
