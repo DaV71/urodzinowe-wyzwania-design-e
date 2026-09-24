@@ -22,7 +22,7 @@ RUN export DATABASE_URL=postgresql://build:build@localhost:5432/build \
       AUTH_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx \
       CODES_SECRET=xxxxxxxxxxxxxxxx \
       PLAYER_TOKEN=xxxxxxxxxxxxxxxx \
-      ADMIN_PASSWORD=xxxxxxxx \
+      ADMIN_PASSWORD=xxxxxxxxxxxxxxxx \
       APP_URL=http://localhost:3000 \
       UPLOAD_DIR=/tmp/uploads \
  && npx prisma generate \
