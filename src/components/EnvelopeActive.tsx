@@ -40,8 +40,8 @@ export function EnvelopeActive({ task }: { task: BoardTask }) {
       {waiting && (
         <>
           <p className={styles.waiting}>
-            Zgłoszenie wysłane {task.pending ? formatSent(task.pending.createdAt) : ""}. Świeczka zapali się po
-            potwierdzeniu.
+            {task.pending ? `Zgłoszenie wysłane ${formatSent(task.pending.createdAt)}.` : "Zgłoszenie wysłane."} Świeczka
+            zapali się po potwierdzeniu.
           </p>
           {photos.length > 0 && (
             <ul className={styles.thumbs} aria-label="Wysłane zdjęcia">

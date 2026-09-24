@@ -52,6 +52,9 @@ export function SubmitForm({ taskId, proof, proofHint, askDistance, askDuration,
   // Po revalidatePath koperta przechodzi w "czeka na Dawida"; ten sam komponent (ten sam klucz)
   // zachowuje stan akcji, więc potwierdzenie jest widoczne tylko tuż po wysłaniu.
   if (waiting) {
+    // Lista nazw należała do wysłanego zgłoszenia — po ewentualnym odrzuceniu formularz startuje pusty.
+    if (fileNames.length > 0) setFileNames([]);
+    if (localError) setLocalError(null);
     return state && "ok" in state ? (
       <p role="status" className={styles.success}>
         Wysłane! Dawid dostał znać.
@@ -68,7 +71,8 @@ export function SubmitForm({ taskId, proof, proofHint, askDistance, askDuration,
     setLocalError(null);
   }
 
-  // Wysyłka przez onSubmit (bez `action`): React nie czyści formularza, więc po błędzie pola zostają.
+  // Po hydracji wysyłamy sami (preventDefault + startTransition): React nie czyści wtedy formularza,
+  // więc po błędzie pola zostają. `action={formAction}` daje POST multipart przed hydracją (bez danych w URL).
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
@@ -82,7 +86,7 @@ export function SubmitForm({ taskId, proof, proofHint, askDistance, askDuration,
   }
 
   return (
-    <form className={styles.form} onSubmit={onSubmit} noValidate>
+    <form action={formAction} onSubmit={onSubmit} className={styles.form} noValidate>
       <input type="hidden" name="taskId" value={taskId} />
 
       {withPhotos && (

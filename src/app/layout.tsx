@@ -3,7 +3,7 @@ import { Anton, Space_Grotesk } from "next/font/google";
 import { site } from "@/config/site";
 import "./globals.css";
 
-const anton = Anton({ weight: "400", subsets: ["latin"], variable: "--font-anton" });
+const anton = Anton({ weight: "400", subsets: ["latin", "latin-ext"], variable: "--font-anton" });
 
 const grotesk = Space_Grotesk({
   weight: ["400", "500", "700"],
