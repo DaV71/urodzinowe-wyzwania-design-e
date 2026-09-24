@@ -505,14 +505,14 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
   `allCodes`, `clearAdminCookie`, `prisma.auditLog`, `getEnv().PLAYER_TOKEN`, `formatDuration`, `formatKm`.
 - Produces: actions `approveAction(taskId)`, `rejectAction(taskId, reason)`, `undoAction()`, `resetAction(confirmWord)`, `logoutAction()`.
 
-- [ ] **Krok 1: Strona** (`requireAdmin()`), sekcje i treść wg SPEC §9. `generateMetadata` ustawia tytuł
+- [x] **Krok 1: Strona** (`requireAdmin()`), sekcje i treść wg SPEC §9. `generateMetadata` ustawia tytuł
   `(${countPending()}) Urodzinowe wyzwania · admin` (bez nawiasu, gdy 0). `PendingCard` `id="task-{n}"`: metryki, dla `reference`
   tekst "ref. z zad. {id}: {mm:ss} → teraz {mm:ss}, {±s} s" z ✓/✗, zdjęcia (`<a href target=_blank><img>`), notatka, `warnings` jako żółte
   etykiety; Zatwierdź (h 52, czarny/żółty) i Odrzuć (pole powodu `required`). Mobile-first, max-width 720 na desktopie.
-- [ ] **Krok 2: Actions** — każda od `requireAdmin()`; `revalidatePath("/admin")` i `revalidatePath("/")`; `resetAction` tylko dla `"RESET"`.
-- [ ] **Krok 3: Ręcznie** — zgłoszenie gracza ze zdjęciem widoczne w panelu → Zatwierdź → świeczka u gracza; Odrzuć → koperta z powodem;
+- [x] **Krok 2: Actions** — każda od `requireAdmin()`; `revalidatePath("/admin")` i `revalidatePath("/")`; `resetAction` tylko dla `"RESET"`.
+- [x] **Krok 3: Ręcznie** — zgłoszenie gracza ze zdjęciem widoczne w panelu → Zatwierdź → świeczka u gracza; Odrzuć → koperta z powodem;
   Cofnij; Reset; `curl -I /admin` bez cookie → redirect; wydruk kodów (`@media print`).
-- [ ] **Krok 4: `npm run check`**, commit `claude: T8 — panel admina`.
+- [x] **Krok 4: `npm run check`**, commit `claude: T8 — panel admina`.
 
 ---
 

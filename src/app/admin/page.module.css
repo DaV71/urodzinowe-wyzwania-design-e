@@ -1,0 +1,716 @@
+/* Panel admina: te same tokeny co strona jubilata (SPEC §8), mobile-first, max 720 px. */
+.page {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 28px 20px 48px;
+}
+
+/* ——— Nagłówek i komunikaty ——— */
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.pill {
+  padding: 4px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--yellow);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+.lead {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.flash,
+.flashError {
+  margin: -12px 0 0;
+  padding: 12px 14px;
+  border: 3px solid var(--ink);
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.flash {
+  background: var(--yellow);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.flashError {
+  background: var(--card);
+  box-shadow: 4px 4px 0 var(--accent);
+  color: var(--accent);
+}
+
+/* ——— Sekcje ——— */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  scroll-margin-top: 16px;
+}
+
+.h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 3px solid var(--ink);
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0.5px;
+}
+
+.count {
+  padding: 2px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--card);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.empty {
+  margin: 0;
+  padding: 14px;
+  border: 2px dashed var(--locked);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.small {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.input,
+.textarea {
+  box-sizing: border-box;
+  width: 100%;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--ink);
+  /* 16 px: iOS nie przybliża strony przy fokusie pola. */
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.input {
+  height: 44px;
+  padding: 0 12px;
+}
+
+.textarea {
+  padding: 10px 12px;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+/* ——— Przyciski ——— */
+
+.primary,
+.secondary,
+.danger {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--ink);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: background 0.15s;
+}
+
+/* Jak "Zrobione" u jubilata: czarny z żółtym napisem. */
+.primary {
+  width: 100%;
+  height: 52px;
+  padding: 0 8px;
+  background: var(--ink);
+  color: var(--yellow);
+}
+
+.primary:hover {
+  background: #2a2622;
+}
+
+.secondary {
+  min-height: 44px;
+  padding: 0 16px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.secondary:hover {
+  background: var(--bg);
+}
+
+.danger {
+  min-height: 44px;
+  padding: 0 16px;
+  background: var(--accent);
+  color: #fff;
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.danger:disabled {
+  border-color: var(--locked);
+  background: var(--card-locked);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* <summary> jako przycisk (dwustopniowe potwierdzenia bez window.confirm). */
+summary.secondary {
+  width: fit-content;
+  list-style: none;
+}
+
+summary.secondary::-webkit-details-marker {
+  display: none;
+}
+
+details[open] > summary.secondary {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ——— Karta zgłoszenia ——— */
+
+.pendingCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 6px 6px 0 var(--accent);
+  scroll-margin-top: 16px;
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.meta {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0.5px;
+  overflow-wrap: anywhere;
+}
+
+.metrics {
+  display: flex;
+  gap: 10px;
+  margin: 0;
+}
+
+.metrics > div {
+  flex: 1 1 0;
+  padding: 8px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.metrics dt {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.metrics dd {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.refOk,
+.refBad {
+  margin: 0;
+  text-wrap: balance;
+  padding: 8px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.refOk {
+  background: var(--yellow);
+}
+
+.refBad {
+  background: var(--card);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.thumbLink {
+  display: block;
+  border-radius: 8px;
+}
+
+.thumb {
+  display: block;
+  box-sizing: border-box;
+  width: 96px;
+  height: 96px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--bg);
+  object-fit: cover;
+}
+
+.note {
+  margin: 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--yellow);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+
+.warnings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.warning {
+  padding: 4px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--yellow);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.warning::before {
+  content: "! ";
+}
+
+.reject,
+.undo {
+  display: flex;
+  flex-direction: column;
+}
+
+.rejectForm,
+.undoForm,
+.dangerForm {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.rejectForm,
+.undoForm {
+  margin-top: 10px;
+}
+
+/* ——— Tablica ——— */
+
+.taskList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: var(--card);
+  overflow: hidden;
+}
+
+.taskRow {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.taskRow + .taskRow {
+  border-top: 1px solid var(--flap);
+}
+
+.taskRow[data-status="LOCKED"] {
+  background: var(--card-locked);
+  color: var(--muted);
+}
+
+/* Co 7 zadań zaczyna się nowy etap. */
+.taskRow:nth-child(7n + 1):not(:first-child) {
+  border-top: 3px solid var(--ink);
+}
+
+.taskNo {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.taskBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.taskTitle {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.taskMeta {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.status {
+  padding: 3px 8px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.statusDone {
+  background: var(--yellow);
+}
+
+.statusPending {
+  background: var(--accent);
+  color: #fff;
+}
+
+.statusActive {
+  background: var(--card);
+}
+
+.statusLocked {
+  border-color: var(--locked);
+  color: var(--muted);
+}
+
+/* ——— Link startowy ——— */
+
+.copy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.copy .input {
+  flex: 1 1 220px;
+  min-width: 0;
+  font-size: 14px;
+  text-overflow: ellipsis;
+}
+
+.copy .small {
+  flex-basis: 100%;
+}
+
+.copy .small:empty {
+  display: none;
+}
+
+/* ——— Kody ——— */
+
+.codes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: var(--card);
+  overflow: hidden;
+}
+
+.codeRow {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--flap);
+  break-inside: avoid;
+}
+
+.codeRow:first-child {
+  border-top: 0;
+}
+
+.codeNo {
+  font-family: var(--font-display);
+  font-size: 18px;
+  text-align: right;
+}
+
+.codeTitle {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ——— Strefa niebezpieczna ——— */
+
+.dangerSection .h2 {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+}
+
+.dangerForm {
+  padding: 16px;
+  border: 3px dashed var(--accent);
+  border-radius: 14px;
+}
+
+.dangerForm .input {
+  max-width: 220px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* ——— Dziennik ——— */
+
+.audit {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.auditRow {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--flap);
+}
+
+.auditTime {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.auditDetail {
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+
+.logout {
+  display: flex;
+}
+
+/* ——— Szersze ekrany ——— */
+
+@media (min-width: 640px) {
+  .page {
+    padding-top: 40px;
+  }
+
+  .title {
+    font-size: 48px;
+  }
+
+  .pendingCard {
+    padding: 22px 24px;
+    box-shadow: 8px 8px 0 var(--accent);
+  }
+
+  .cardTitle {
+    font-size: 34px;
+  }
+
+  .primary {
+    align-self: flex-start;
+    width: auto;
+    padding: 0 28px;
+  }
+
+  .codes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .codeRow:nth-child(2) {
+    border-top: 0;
+  }
+
+  .codeRow:nth-child(odd) {
+    border-right: 1px solid var(--flap);
+  }
+
+  .auditRow {
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .auditTime {
+    flex: 0 0 130px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primary,
+  .secondary,
+  .danger {
+    transition: none;
+  }
+}
+
+/* ——— Druk: tylko lista kodów ——— */
+
+@media print {
+  .page {
+    max-width: none;
+    padding: 0;
+    gap: 0;
+  }
+
+  .page > :not(.codesSection),
+  .noPrint {
+    display: none !important;
+  }
+
+  .codes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-width: 2px;
+  }
+
+  /* Zwarte wiersze: cała lista mieści się na jednej stronie A4. */
+  .codeRow {
+    padding: 5px 10px;
+    border-top: 1px solid #999;
+  }
+
+  .codeRow:nth-child(-n + 2) {
+    border-top: 0;
+  }
+
+  .codeRow:nth-child(odd) {
+    border-right: 1px solid #999;
+  }
+
+  .codeTitle {
+    font-size: 11px;
+    line-height: 1.3;
+    white-space: normal;
+  }
+
+  .code {
+    font-size: 17px;
+  }
+}
