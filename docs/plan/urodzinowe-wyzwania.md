@@ -596,12 +596,12 @@ model AuditLog { id String @id @default(cuid()); actor Actor; action String; tas
 **Pliki:**
 - Create: `scripts/backup.sh`, `README.md`
 
-- [ ] **Krok 1: `scripts/backup.sh`** — `source scripts/lib/deploy-lib.sh`, `load_config`; `pg_dump -Fc` przez `docker compose exec -T db`
+- [x] **Krok 1: `scripts/backup.sh`** — `source scripts/lib/deploy-lib.sh`, `load_config`; `pg_dump -Fc` przez `docker compose exec -T db`
   do `backups/db-<data>.dump`; wolumen `urodzinowe_uploads` → `backups/uploads-<data>.tgz`; komentarz z komendami restore.
-- [ ] **Krok 2: `README.md`** — po polsku: co to jest, dev lokalny (`db:up`, `.env`, `db:migrate`, `db:seed`, `dev`), personalizacja
+- [x] **Krok 2: `README.md`** — po polsku: co to jest, dev lokalny (`db:up`, `.env`, `db:migrate`, `db:seed`, `dev`), personalizacja
   (`src/config/site.ts`), zmiana treści zadań (`prisma/seed-data/tasks.json` + redeploy), deploy (`deploy.conf`, `--dry-run`, `deploy.sh`,
   odczyt `ADMIN_PASSWORD`/linku), checklista Dawida (SPEC §13), kody do druku, backup, rotacja sekretów (`--set-secret`).
-- [ ] **Krok 3: Commit** `claude: T11 — backup, README`.
+- [x] **Krok 3: Commit** `claude: T11 — backup, README`.
 
 ---
 
