@@ -236,6 +236,10 @@ else
     pass "--set-secret z niedozwolonym znakiem odrzucony"
   fi
   if [ -e "$fake/ssh-wywolane" ]; then fail "ssh wywołane mimo błędnej wartości"; else pass "odrzucenie przed jakimkolwiek ssh"; fi
+  short_msg=$( (PATH="$fake:$PATH" ADMIN_PASSWORD=Haslo15znakowe1 bash scripts/deploy.sh --config "$FIXTURE" --set-secret ADMIN_PASSWORD) 2>&1) &&
+    fail "--set-secret ADMIN_PASSWORD krótsze niż 16 znaków przeszło" ||
+    assert_contains "--set-secret ADMIN_PASSWORD: minimum 16 znaków" "$short_msg" "co najmniej 16 znaków"
+  if [ -e "$fake/ssh-wywolane" ]; then fail "ssh wywołane mimo za krótkiego hasła"; else pass "za krótkie hasło odrzucone przed ssh"; fi
 fi
 
 echo "7. wait_for_url"

@@ -83,7 +83,7 @@ for key in ${SECRET_KEYS[@]+"${SECRET_KEYS[@]}"}; do
   fi
   case "$key" in
     AUTH_SECRET) min=32 ;;
-    ADMIN_PASSWORD) min=8 ;;
+    ADMIN_PASSWORD) min=16 ;;
     *) min=16 ;;
   esac
   [ "${#value}" -ge "$min" ] || die "$key musi mieć co najmniej $min znaków."

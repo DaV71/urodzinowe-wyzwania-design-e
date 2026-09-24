@@ -60,7 +60,7 @@ POSTGRES_PASSWORD=$(rnd 16)
 AUTH_SECRET=$(rnd 32)
 CODES_SECRET=$(rnd 16)
 PLAYER_TOKEN=$(rnd 16)
-ADMIN_PASSWORD=$(rnd 8)
+ADMIN_PASSWORD=$(rnd 16)
 EOF
 
 # --- 3. Build + start ---

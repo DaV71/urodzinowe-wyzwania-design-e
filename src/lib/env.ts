@@ -7,7 +7,7 @@ const schema = z.object({
   AUTH_SECRET: z.string().min(32),
   CODES_SECRET: z.string().min(16),
   PLAYER_TOKEN: z.string().min(16),
-  ADMIN_PASSWORD: z.string().min(8),
+  ADMIN_PASSWORD: z.string().min(16),
   APP_URL: z.string().url(),
   UPLOAD_DIR: z.string().min(1),
 });
