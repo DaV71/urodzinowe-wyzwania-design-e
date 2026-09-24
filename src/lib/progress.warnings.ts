@@ -1,4 +1,5 @@
 import type { Task } from "@/generated/prisma/client";
+import { formatDuration } from "@/lib/text";
 
 // Wejście zgłoszenia (ścieżki i hashe SHA-256 zapisanych zdjęć, opcjonalne wyniki).
 export type SubmitInput = {
@@ -17,12 +18,6 @@ export type WarningContext = {
 
 const MIN_SUBMIT_DELAY_MS = 5 * 60_000;
 
-// Minimalny format mm:ss (minuty bez limitu 59). TODO(T5): można podmienić na lib/text.
-function mmss(seconds: number): string {
-  const s = Math.max(0, Math.round(seconds));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-}
-
 // Kilometry z przecinkiem, do 2 miejsc, bez zbędnych zer: 2950 → "2,95", 3000 → "3".
 function km(meters: number): string {
   return String(Number((meters / 1000).toFixed(2))).replace(".", ",");
@@ -32,12 +27,15 @@ function km(meters: number): string {
 export function computeWarnings(task: Task, input: SubmitInput, ctx: WarningContext): string[] {
   const warnings: string[] = [];
 
+  if (task.askDistance && input.distanceM == null) warnings.push("Nie podano dystansu");
+  if (task.askDuration && input.durationS == null) warnings.push("Nie podano czasu");
+
   if (task.minDistanceM != null && input.distanceM != null && input.distanceM < task.minDistanceM) {
     warnings.push(`Dystans ${km(input.distanceM)} km poniżej progu ${km(task.minDistanceM)} km`);
   }
 
   if (task.maxDurationS != null && input.durationS != null && input.durationS > task.maxDurationS) {
-    warnings.push(`Czas ${mmss(input.durationS)} powyżej limitu ${mmss(task.maxDurationS)}`);
+    warnings.push(`Czas ${formatDuration(input.durationS)} powyżej limitu ${formatDuration(task.maxDurationS)}`);
   }
 
   const sinceUnlock = ctx.now.getTime() - ctx.unlockedAt.getTime();
@@ -57,7 +55,7 @@ export function computeWarnings(task: Task, input: SubmitInput, ctx: WarningCont
     input.durationS > ctx.reference - task.minImprovementS
   ) {
     warnings.push(
-      `Czas ${mmss(input.durationS)} nie jest szybszy o ${task.minImprovementS} s od referencji ${mmss(ctx.reference)}`,
+      `Czas ${formatDuration(input.durationS)} nie jest szybszy o ${task.minImprovementS} s od referencji ${formatDuration(ctx.reference)}`,
     );
   }
 

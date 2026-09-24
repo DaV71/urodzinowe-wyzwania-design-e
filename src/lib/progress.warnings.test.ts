@@ -5,7 +5,7 @@ import { computeWarnings } from "./progress.warnings";
 function task(over: Partial<Task> = {}): Task {
   return {
     id: 3, stage: 1, title: "Bieg 1 km", description: "Opis", proof: "PHOTO", proofHint: "Screenshot",
-    askDistance: true, askDuration: true, maxPhotos: 1, compareToTask: null, minImprovementS: null,
+    askDistance: false, askDuration: false, maxPhotos: 1, compareToTask: null, minImprovementS: null,
     minDistanceM: null, maxDurationS: null, ...over,
   };
 }
@@ -77,8 +77,34 @@ describe("computeWarnings", () => {
     });
   });
 
+  it("brak dystansu, gdy zadanie o niego prosi", () => {
+    const t = task({ askDistance: true });
+    expect(computeWarnings(t, { photos: [photo] }, ctx())).toEqual(["Nie podano dystansu"]);
+  });
+
+  it("brak czasu, gdy zadanie o niego prosi", () => {
+    const t = task({ askDuration: true });
+    expect(computeWarnings(t, { photos: [photo], distanceM: 1000 }, ctx())).toEqual(["Nie podano czasu"]);
+  });
+
+  it("podany dystans i czas przy askDistance/askDuration — brak ostrzeżeń", () => {
+    const t = task({ askDistance: true, askDuration: true });
+    expect(computeWarnings(t, { photos: [photo], distanceM: 1000, durationS: 300 }, ctx())).toEqual([]);
+  });
+
+  it("zadanie bez askDistance/askDuration nie wymaga wyników", () => {
+    expect(computeWarnings(task(), { photos: [photo] }, ctx())).toEqual([]);
+  });
+
+  it("czas od godziny w formacie h:mm:ss", () => {
+    const t = task({ maxDurationS: 3600 });
+    expect(computeWarnings(t, { photos: [photo], durationS: 3725 }, ctx())).toEqual([
+      "Czas 1:02:05 powyżej limitu 1:00:00",
+    ]);
+  });
+
   it("kilka ostrzeżeń naraz w stałej kolejności", () => {
-    const t = task({ minDistanceM: 3000, maxDurationS: 2400 });
+    const t = task({ minDistanceM: 3000, maxDurationS: 2400, askDistance: true, askDuration: true });
     const now = new Date(unlockedAt.getTime() + 60_000);
     const w = computeWarnings(t, { photos: [photo], distanceM: 2500, durationS: 2500 }, ctx({ now, knownHashes: new Set(["h1"]) }));
     expect(w).toEqual([
