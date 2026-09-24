@@ -16,7 +16,7 @@ APP_DOMAIN=urodziny.twojadomena.pl   # subdomena objęta certem wgranym do proxy
 REPO_URL=https://github.com/uzytkownik/urodzinowe-wyzwania.git
 REPO_BRANCH=main            # opcjonalnie (domyślnie main)
 DEPLOY_DIR=urodzinowe       # opcjonalnie: katalog na serwerze (względem $HOME)
-GIT_TOKEN=                  # opcjonalnie: token TYLKO dla prywatnego repo
+GIT_TOKEN=                  # opcjonalnie: token TYLKO dla prywatnego repo (REPO_URL https://, git >= 2.31 na serwerze)
 
 # --- Czekanie na start ---
 HEALTH_TIMEOUT=180          # opcjonalnie: ile sekund czekać na https://$APP_DOMAIN/api/health

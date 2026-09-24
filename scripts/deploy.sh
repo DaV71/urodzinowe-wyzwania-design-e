@@ -96,9 +96,7 @@ for key in ${SECRET_KEYS[@]+"${SECRET_KEYS[@]}"}; do
     *) min=16 ;;
   esac
   [ "${#value}" -ge "$min" ] || die "$key musi mieć co najmniej $min znaków."
-  if [ "$key" = PLAYER_TOKEN ]; then
-    [[ $value =~ ^[A-Za-z0-9_-]+$ ]] || die "PLAYER_TOKEN trafia do linku — dozwolone tylko A-Z a-z 0-9 _ -."
-  fi
+  validate_secret_value "$key" "$value"
   pairs+=("$key=$value")
 done
 

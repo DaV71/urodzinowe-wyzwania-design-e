@@ -82,7 +82,9 @@ validate_config() {
   fi
   [[ $APP_DOMAIN =~ ^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$ ]] ||
     die "APP_DOMAIN musi być nazwą domeny (np. urodziny.twojadomena.pl): $APP_DOMAIN"
-  [[ $REPO_URL =~ ^[A-Za-z0-9@:/._~%+-]+$ ]] || die "REPO_URL ma niedozwolone znaki: $REPO_URL"
+  [[ $REPO_URL =~ ^(https://|ssh://|git@)[A-Za-z0-9@:/._~%+-]+$ ]] ||
+    die "REPO_URL musi zaczynać się od https://, ssh:// lub git@ i nie zawierać znaków specjalnych: $REPO_URL"
+  [[ -z ${GIT_TOKEN:-} || $REPO_URL == https://* ]] || die "GIT_TOKEN działa tylko z REPO_URL w postaci https://…"
   [[ $REPO_BRANCH =~ ^[A-Za-z0-9._/-]+$ && $REPO_BRANCH != -* ]] || die "REPO_BRANCH ma niedozwolone znaki: $REPO_BRANCH"
   [[ $DEPLOY_DIR =~ ^[A-Za-z0-9._-]+$ && $DEPLOY_DIR != . && $DEPLOY_DIR != .. ]] ||
     die "DEPLOY_DIR to nazwa katalogu względem \$HOME (bez '/' i '..'): $DEPLOY_DIR"
@@ -90,7 +92,8 @@ validate_config() {
   [[ $HEALTH_TIMEOUT =~ ^[0-9]+$ ]] || die "HEALTH_TIMEOUT musi być liczbą sekund: $HEALTH_TIMEOUT"
 }
 
-# inject_git_token URL TOKEN — URL https z tokenem (tylko do clone/fetch; origin zostaje bez tokenu).
+# inject_git_token URL TOKEN — URL https z tokenem. Skrypt zdalny go już nie używa (token idzie nagłówkiem
+# http.extraHeader przez GIT_CONFIG_*, więc nie ma go w URL, argv ani .git/config); zostaje jako funkcja interfejsu.
 inject_git_token() {
   local url=$1 token=${2:-}
   if [ -z "$token" ]; then
@@ -207,8 +210,6 @@ EOF
 
 # Używa REPO_URL, REPO_BRANCH, DEPLOY_DIR, GIT_TOKEN (po validate_config).
 gen_remote_code_script() {
-  local fetch_url
-  fetch_url=$(inject_git_token "$REPO_URL" "${GIT_TOKEN:-}")
   cat <<'EOF'
 
 # --- 3. Kod: clone przy pierwszym deployu, potem fetch + reset do gałęzi ---
@@ -218,24 +219,57 @@ EOF
   # shellcheck disable=SC2016 # $HOME rozwija się na serwerze
   printf 'APP_DIR="$HOME"/%q\n' "$DEPLOY_DIR"
   printf 'BRANCH=%q\n' "$REPO_BRANCH"
-  printf 'FETCH_URL=%q\n' "$fetch_url"
+  printf 'REPO_URL=%q\n' "$REPO_URL"
+  if [ -n "${GIT_TOKEN:-}" ]; then
+    # Token tylko w środowisku procesu git (GIT_CONFIG_*, git >= 2.31): nie ma go w URL, argv ani .git/config.
+    printf 'GIT_TOKEN=%q\n' "$GIT_TOKEN"
+    cat <<'EOF'
+read -r git_major git_minor < <(git version | sed -E 's/^git version ([0-9]+)\.([0-9]+).*/\1 \2/')
+if [ "$git_major" -lt 2 ] || { [ "$git_major" -eq 2 ] && [ "$git_minor" -lt 31 ]; }; then
+  rdie "GIT_TOKEN wymaga git >= 2.31 na serwerze (jest: $(git version))."
+fi
+git_remote() {
+  local auth
+  auth=$(printf 'x-access-token:%s' "$GIT_TOKEN" | base64 | tr -d '\n')
+  GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.extraHeader GIT_CONFIG_VALUE_0="Authorization: Basic $auth" git "$@"
+}
+EOF
+  else
+    # shellcheck disable=SC2016 # rozwija się na serwerze
+    echo 'git_remote() { git "$@"; }'
+  fi
   cat <<'EOF'
 if [ -d "$APP_DIR/.git" ]; then
   cd "$APP_DIR"
-  git fetch --depth 1 "$FETCH_URL" "$BRANCH"
+  git_remote fetch --depth 1 -- "$REPO_URL" "$BRANCH"
   git reset --hard FETCH_HEAD
 elif [ -e "$APP_DIR" ]; then
   rdie "$APP_DIR istnieje, ale nie jest repozytorium git — przenieś go i uruchom deploy ponownie."
 else
-  git clone --depth 1 --branch "$BRANCH" "$FETCH_URL" "$APP_DIR"
+  git_remote clone --depth 1 --branch "$BRANCH" -- "$REPO_URL" "$APP_DIR"
   cd "$APP_DIR"
 fi
-unset FETCH_URL
+unset GIT_TOKEN
 EOF
   # origin zawsze bez tokenu — token nie zostaje w .git/config.
   printf 'git remote set-url origin %q\n' "$REPO_URL"
   # shellcheck disable=SC2016 # rozwija się na serwerze
   echo 'echo "Wersja: $(git log -1 --format="%h %s")"'
+}
+
+# validate_secret_value KLUCZ WARTOŚĆ — czy sekret może być ustawiony przez --set-secret (klucz i zestaw znaków).
+# Używane w deploy.sh (przed połączeniem z serwerem) i w gen_remote_env_script.
+validate_secret_value() {
+  local key=$1 val=$2
+  [ "$key" != POSTGRES_PASSWORD ] ||
+    die "POSTGRES_PASSWORD nie może być zmieniony przez deploy — hasło istniejącej bazy wymaga ALTER USER."
+  [[ " $DEPLOY_ROTATABLE " == *" $key "* ]] || die "Nieobsługiwany sekret: $key (dozwolone: $DEPLOY_ROTATABLE)."
+  # Zestaw znaków bezpieczny w "…" basha i w .env docker compose (bez $, #, cudzysłowów, spacji).
+  [[ $val =~ ^[A-Za-z0-9._~@%+=:,!^*-]+$ ]] ||
+    die "Wartość $key zawiera niedozwolone znaki (dozwolone: A-Z a-z 0-9 . _ ~ @ % + = : , ! ^ * -)."
+  if [ "$key" = PLAYER_TOKEN ]; then
+    [[ $val =~ ^[A-Za-z0-9_-]+$ ]] || die "PLAYER_TOKEN trafia do linku — dozwolone tylko A-Z a-z 0-9 _ -."
+  fi
 }
 
 # gen_remote_env_script APP_DOMAIN [KLUCZ=WARTOŚĆ…] — generuje/aktualizuje ./.env na serwerze.
@@ -248,11 +282,7 @@ gen_remote_env_script() {
     [[ $pair == *=* ]] || die "Oczekiwano KLUCZ=WARTOŚĆ: $pair"
     key=${pair%%=*}
     val=${pair#*=}
-    [ "$key" != POSTGRES_PASSWORD ] ||
-      die "POSTGRES_PASSWORD nie może być zmieniony przez deploy — hasło istniejącej bazy wymaga ALTER USER."
-    [[ " $DEPLOY_ROTATABLE " == *" $key "* ]] || die "Nieobsługiwany sekret: $key (dozwolone: $DEPLOY_ROTATABLE)."
-    # Zestaw znaków bezpieczny w "…" basha i w .env docker compose (bez $, #, cudzysłowów, spacji).
-    [[ $val =~ ^[A-Za-z0-9._~@%+=:,!^*-]+$ ]] || die "Wartość $key zawiera niedozwolone znaki (dozwolone: A-Z a-z 0-9 . _ ~ @ % + = : , ! ^ * -)."
+    validate_secret_value "$key" "$val"
     set_keys+=("$key")
     set_vals+=("$val")
   done
@@ -295,7 +325,7 @@ gen_remote_secret_probe_script() {
   done
   printf '  exit 0\nfi\n'
   for key in "$@"; do
-    printf "grep -q '^%s=' .env || echo %s\n" "$key" "$key"
+    printf "grep -q '^%s=.' .env || echo %s\n" "$key" "$key"
   done
 }
 

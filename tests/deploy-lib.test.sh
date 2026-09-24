@@ -2,6 +2,7 @@
 # Testy scripts/lib/deploy-lib.sh i `scripts/deploy.sh --dry-run`: bash tests/deploy-lib.test.sh
 # Bez serwera i bez sieci: generatory skryptu zdalnego sprawdzamy jako tekst (+ `bash -n`),
 # a fragment `.env` uruchamiamy lokalnie w katalogu tymczasowym. Działa w Git Bash (Windows) i w Linuxie.
+# shellcheck disable=SC2016 # wzorce w asercjach to celowo dosłowne fragmenty skryptu zdalnego
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -82,6 +83,19 @@ assert_fails "validate_config odrzuca APP_DOMAIN ze znakami specjalnymi" bash -c
   source '$LIB'
   SERVER_HOST=h SSH_USER=u APP_DOMAIN='app.example.pl; rm -rf /' REPO_URL=https://x/y.git
   validate_config"
+for bad_url in "-oProxyCommand=id" "--upload-pack=id" "ftp://example.com/x.git" "file:///etc/x.git" "http://github.com/x/y.git"; do
+  assert_fails "validate_config odrzuca REPO_URL $bad_url" bash -c "
+    source '$LIB'
+    SERVER_HOST=h SSH_USER=u APP_DOMAIN=app.example.pl REPO_URL='$bad_url'
+    validate_config"
+done
+for good_url in "https://github.com/x/y.git" "ssh://git@github.com/x/y.git" "git@github.com:x/y.git"; do
+  if (SERVER_HOST=h SSH_USER=u APP_DOMAIN=app.example.pl REPO_URL=$good_url validate_config) 2>/dev/null; then
+    pass "validate_config przyjmuje REPO_URL $good_url"
+  else
+    fail "validate_config odrzuca poprawny REPO_URL $good_url"
+  fi
+done
 out=$(load_config "$FIXTURE" && echo "$SERVER_HOST|$SSH_PORT|$SSH_KEY|$APP_DOMAIN|$GIT_TOKEN")
 assert_eq "load_config czyta fixture (komentarze w linii, puste wartości)" "$out" \
   "203.0.113.10|2222||app.example.pl|token-testowy"
@@ -97,7 +111,12 @@ seturl=$(grep 'git remote set-url origin' <<<"$code" || true)
 assert_contains "gen_remote_code_script ustawia origin" "$seturl" "git remote set-url origin"
 assert_contains "origin wskazuje na REPO_URL" "$seturl" "https://github.com/przyklad/urodzinowe.git"
 assert_not_contains "origin bez tokenu" "$seturl" "tok123"
-assert_contains "kod: git clone --depth 1 --branch" "$code" "git clone --depth 1 --branch"
+assert_contains "kod: git clone --depth 1 --branch … -- URL" "$code" 'git_remote clone --depth 1 --branch "$BRANCH" -- "$REPO_URL"'
+assert_contains "kod: git fetch … -- URL" "$code" 'git_remote fetch --depth 1 -- "$REPO_URL"'
+assert_not_contains "kod: token nie trafia do URL" "$code" "tok123@"
+assert_contains "kod: token przez http.extraHeader w env gita" "$code" "GIT_CONFIG_KEY_0=http.extraHeader"
+code_pub=$(set_test_config && validate_config && gen_remote_code_script)
+assert_not_contains "kod bez GIT_TOKEN: bez nagłówka autoryzacji" "$code_pub" "Authorization"
 assert_contains "kod: reset do FETCH_HEAD" "$code" "git reset --hard FETCH_HEAD"
 
 echo "3. gen_remote_env_script"
@@ -119,7 +138,15 @@ assert_fails "gen_remote_env_script odrzuca wartość z cudzysłowem/\$" bash -c
   source '$LIB'; gen_remote_env_script app.example.pl 'ADMIN_PASSWORD=a\"\$(id)'"
 assert_bash_syntax "env: bash -n" "$env_script"
 
-echo "3a. gen_secret"
+echo "3a. validate_secret_value / gen_secret"
+if (validate_secret_value ADMIN_PASSWORD 'Haslo.123_ok') 2>/dev/null; then pass "validate_secret_value przyjmuje poprawne hasło"; else fail "validate_secret_value odrzuca poprawne hasło"; fi
+assert_fails "validate_secret_value odrzuca \$" validate_secret_value ADMIN_PASSWORD 'zle$haslo'
+assert_fails "validate_secret_value odrzuca cudzysłów" validate_secret_value ADMIN_PASSWORD 'zle"haslo'
+assert_fails "validate_secret_value odrzuca spację" validate_secret_value ADMIN_PASSWORD 'zle haslo'
+assert_fails "validate_secret_value odrzuca # " validate_secret_value ADMIN_PASSWORD 'zle#haslo'
+assert_fails "validate_secret_value odrzuca POSTGRES_PASSWORD" validate_secret_value POSTGRES_PASSWORD 'Haslo123'
+assert_fails "validate_secret_value: PLAYER_TOKEN tylko [A-Za-z0-9_-]" validate_secret_value PLAYER_TOKEN 'token.z.kropka'
+
 for len in 20 32 48; do
   s=$(gen_secret "$len")
   assert_eq "gen_secret $len — długość" "${#s}" "$len"
@@ -185,9 +212,31 @@ assert_fails "brak pliku configu → błąd" bash scripts/deploy.sh --dry-run --
 
 echo "6. gen_remote_secret_probe_script"
 probe=$(set_test_config && validate_config && gen_remote_secret_probe_script ADMIN_PASSWORD PLAYER_TOKEN)
-assert_contains "probe: ADMIN_PASSWORD" "$probe" "grep -q '^ADMIN_PASSWORD=' .env || echo ADMIN_PASSWORD"
-assert_contains "probe: PLAYER_TOKEN" "$probe" "grep -q '^PLAYER_TOKEN=' .env || echo PLAYER_TOKEN"
+assert_contains "probe: ADMIN_PASSWORD (pusta wartość = brak)" "$probe" "grep -q '^ADMIN_PASSWORD=.' .env || echo ADMIN_PASSWORD"
+assert_contains "probe: PLAYER_TOKEN (pusta wartość = brak)" "$probe" "grep -q '^PLAYER_TOKEN=.' .env || echo PLAYER_TOKEN"
 assert_bash_syntax "probe: bash -n" "$probe"
+
+echo "6a. --set-secret: walidacja wartości przed połączeniem (atrapa ssh)"
+fake="$TMP/fake-bin"
+mkdir -p "$fake"
+printf '#!/usr/bin/env bash
+touch "%s/ssh-wywolane"
+cat >/dev/null
+' "$fake" >"$fake/ssh"
+printf '#!/usr/bin/env bash
+exit 0
+' >"$fake/curl"
+chmod +x "$fake/ssh" "$fake/curl"
+if [ "$(PATH="$fake:$PATH" command -v ssh)" != "$fake/ssh" ]; then
+  fail "atrapa ssh nie jest pierwsza w PATH — pomijam test, żeby nie łączyć się z serwerem"
+else
+  if (PATH="$fake:$PATH" ADMIN_PASSWORD='zle$haslo' bash scripts/deploy.sh --config "$FIXTURE" --set-secret ADMIN_PASSWORD) >/dev/null 2>&1; then
+    fail "--set-secret z niedozwolonym znakiem przeszedł"
+  else
+    pass "--set-secret z niedozwolonym znakiem odrzucony"
+  fi
+  if [ -e "$fake/ssh-wywolane" ]; then fail "ssh wywołane mimo błędnej wartości"; else pass "odrzucenie przed jakimkolwiek ssh"; fi
+fi
 
 echo "7. wait_for_url"
 if command -v curl >/dev/null; then
