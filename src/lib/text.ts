@@ -26,7 +26,8 @@ export function formatDuration(totalSeconds: number): string {
 
 /** "12:40" → 760, "1:02:03" → 3723; niepoprawny format → null. */
 export function parseDuration(input: string): number | null {
-  const match = /^(?:(\d+):)?(\d{1,3}):(\d{2})$/.exec(input.trim());
+  // Separator: dwukropek albo — z klawiatury numerycznej telefonu — kropka, przecinek lub spacja.
+  const match = /^(?:(\d+)[:.,\s])?(\d{1,3})[:.,\s](\d{2})$/.exec(input.trim());
   if (!match) return null;
   const [, hRaw, mRaw, sRaw] = match;
   const h = hRaw === undefined ? 0 : Number(hRaw);

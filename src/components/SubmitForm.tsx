@@ -32,7 +32,7 @@ function message(error: string, maxPhotos: number): string {
     case "size":
       return "Zdjęcie: tylko JPG/PNG/WEBP/HEIC do 10 MB.";
     case "bad_duration":
-      return "Czas w formacie mm:ss.";
+      return "Czas wpisz jako minuty i sekundy, np. 12,40 lub 12:40 (ponad godzinę: 1,02,03).";
     case "bad_distance":
       return "Dystans w kilometrach, np. 2,10.";
     case "not_active":
@@ -109,11 +109,11 @@ export function SubmitForm({ taskId, proof, proofHint, askDistance, askDuration,
               )}
               {askDuration && (
                 <label className={styles.field}>
-                  <span className={styles.label}>Czas (mm:ss)</span>
+                  <span className={styles.label}>Czas (min,sek)</span>
                   <input
                     name="duration"
-                    inputMode="numeric"
-                    placeholder="12:40"
+                    inputMode="decimal"
+                    placeholder="12,40"
                     autoComplete="off"
                     className={styles.input}
                   />

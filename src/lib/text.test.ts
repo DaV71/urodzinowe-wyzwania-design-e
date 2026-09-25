@@ -42,7 +42,19 @@ describe("parseDuration", () => {
     expect(parseDuration(" 5:07 ")).toBe(307);
   });
 
+  it("klawiatura numeryczna w telefonie: kropka, przecinek lub spacja zamiast dwukropka", () => {
+    expect(parseDuration("12.40")).toBe(760);
+    expect(parseDuration("12,40")).toBe(760);
+    expect(parseDuration("12 40")).toBe(760);
+    expect(parseDuration("1.02.03")).toBe(3723);
+    expect(parseDuration("1,02,03")).toBe(3723);
+    expect(parseDuration("1:02.03")).toBe(3723);
+  });
+
   it("niepoprawne wejście → null", () => {
+    expect(parseDuration("12.4")).toBeNull();
+    expect(parseDuration("12..40")).toBeNull();
+    expect(parseDuration("12.70")).toBeNull();
     expect(parseDuration("abc")).toBeNull();
     expect(parseDuration("12:70")).toBeNull();
     expect(parseDuration("1:60:00")).toBeNull();
